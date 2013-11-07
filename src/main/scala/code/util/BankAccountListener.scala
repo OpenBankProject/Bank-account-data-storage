@@ -11,13 +11,9 @@ import net.liftweb.mapper.By
 import net.liftweb.util.Helpers.tryo
 import net.liftweb.util._
 
-/**
- * A dispatcher that listens on an queue and exchange.
- */
 class BankAccountSerializedAMQPDispatcher[T](factory: ConnectionFactory)
     extends AMQPDispatcher[T](factory) {
   override def configure(channel: Channel) {
-    // Set up the exchange and queue
     channel.exchangeDeclare("directExchange", "direct", false)
     channel.queueDeclare("management", false, false, false, null)
     channel.queueBind ("management", "directExchange", "management")
@@ -28,7 +24,6 @@ class BankAccountSerializedAMQPDispatcher[T](factory: ConnectionFactory)
 object BankAccountAMQPListener {
   lazy val factory = new ConnectionFactory {
     import ConnectionFactory._
-
     // localhost is a machine on your network with rabbitmq listening on port 5672
     setHost("localhost")
     setPort(DEFAULT_AMQP_PORT)
@@ -50,14 +45,13 @@ object BankAccountAMQPListener {
 
   def saveBankAccount (account: AddBankAccount) : Boolean = {
     // println("add account: " + account.accountNumber)
-    println(BankAccountDetails.findAll.map {
-      _.id
-      })
     val newAccount: BankAccountDetails = BankAccountDetails.create
     newAccount.accountNumber(account.accountNumber)
     newAccount.blzIban(account.blzIban)
     newAccount.pinCode(account.pinCode)
-    tryo(newAccount.save).isEmpty
+    val saved = !tryo(newAccount.save).isEmpty
+    ResponseSender.sendMessage("account saved: "+saved)
+    saved
 
   }
 
@@ -65,22 +59,30 @@ object BankAccountAMQPListener {
     // println("update account: " + account.accountNumber)
     BankAccountDetails.find(By(BankAccountDetails.accountNumber, account.accountNumber), By(BankAccountDetails.blzIban, account.blzIban)) match {
       case Full(existingAccount) => {
-        // println("id: "+existingAccount.id)
         existingAccount.pinCode(account.pinCode)
-        tryo(existingAccount.save).isEmpty
+        val updated = !tryo(existingAccount.save).isEmpty
+        ResponseSender.sendMessage("account updated: "+updated)
+        updated
       }
-      case _ => false // Errormsg: Account does not exist
+      case _ => {
+        ResponseSender.sendMessage("account does not exist")
+        false
+      }
     }
   }
 
-  def deleteBankAccount (account: DeleteBankAccount)= {
+  def deleteBankAccount (account: DeleteBankAccount) : Boolean = {
     // println("delete account: " + account.accountNumber)
     BankAccountDetails.find(By(BankAccountDetails.accountNumber, account.accountNumber), By(BankAccountDetails.blzIban, account.blzIban)) match {
       case Full(existingAccount) => {
-        // println("id: "+existingAccount.id)
-        tryo(existingAccount.delete_!).isEmpty
+        var deleted = !tryo(existingAccount.delete_!).isEmpty
+        ResponseSender.sendMessage("account deleted: "+deleted)
+        deleted
       }
-      case _ => false // Errormsg: Account does not exist
+      case _ => {
+        ResponseSender.sendMessage("account does not exist")
+        false
+      }
     }
   }
 
