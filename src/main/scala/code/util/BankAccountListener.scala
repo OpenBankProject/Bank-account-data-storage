@@ -1,11 +1,11 @@
 package code.util
 
-// import com.rabbitmq.client.{ConnectionFactory,ConnectionParameters,Channel}
+
 import com.rabbitmq.client.{ConnectionFactory,Channel}
 import net.liftmodules.amqp.{AMQPAddListener,AMQPMessage, AMQPDispatcher, SerializedConsumer}
 import scala.actors._
 import net.liftweb.actor._
-import code.model.{BankAccount, BankAccountDetails, AddBankAccount, UpdateBankAccount, DeleteBankAccount}
+import code.model.{BankAccount, BankAccountDetails, AddBankAccount, UpdateBankAccount, DeleteBankAccount, SuccessResponse,ErrorResponse}
 import net.liftweb.common.{Full,Box,Empty}
 import net.liftweb.mapper.By
 import net.liftweb.util.Helpers.tryo
@@ -32,9 +32,8 @@ object BankAccountAMQPListener {
     setVirtualHost(DEFAULT_VHOST)
   }
 
-  val amqp = new BankAccountSerializedAMQPDispatcher[BankAccount](factory) // string
+  val amqp = new BankAccountSerializedAMQPDispatcher[BankAccount](factory)
 
-  // client is not (yet) cofirming, that it got the message
   val bankAccountListener = new LiftActor {
     protected def messageHandler = {
       case msg@AMQPMessage(contents: AddBankAccount) => saveBankAccount(contents)
@@ -44,43 +43,49 @@ object BankAccountAMQPListener {
   }
 
   def saveBankAccount (account: AddBankAccount) : Boolean = {
-    // println("add account: " + account.accountNumber)
     val newAccount: BankAccountDetails = BankAccountDetails.create
     newAccount.accountNumber(account.accountNumber)
     newAccount.blzIban(account.blzIban)
     newAccount.pinCode(account.pinCode)
     val saved = !tryo(newAccount.save).isEmpty
-    ResponseSender.sendMessage("account saved: "+saved)
+    if (saved)
+      ResponseSender.sendMessage(SuccessResponse(account.id,"account saved"))
+    else
+      ResponseSender.sendMessage(ErrorResponse(account.id,"account already exists"))
     saved
 
   }
 
   def updateBankAccount (account: UpdateBankAccount) : Boolean = {
-    // println("update account: " + account.accountNumber)
     BankAccountDetails.find(By(BankAccountDetails.accountNumber, account.accountNumber), By(BankAccountDetails.blzIban, account.blzIban)) match {
       case Full(existingAccount) => {
         existingAccount.pinCode(account.pinCode)
         val updated = !tryo(existingAccount.save).isEmpty
-        ResponseSender.sendMessage("account updated: "+updated)
+        if (updated)
+          ResponseSender.sendMessage(SuccessResponse(account.id,"account updated"))
+        else
+          ResponseSender.sendMessage(ErrorResponse(account.id,"account not updated"))
         updated
       }
       case _ => {
-        ResponseSender.sendMessage("account does not exist")
+        ResponseSender.sendMessage(ErrorResponse(account.id,"account does not exist"))
         false
       }
     }
   }
 
   def deleteBankAccount (account: DeleteBankAccount) : Boolean = {
-    // println("delete account: " + account.accountNumber)
     BankAccountDetails.find(By(BankAccountDetails.accountNumber, account.accountNumber), By(BankAccountDetails.blzIban, account.blzIban)) match {
       case Full(existingAccount) => {
         var deleted = !tryo(existingAccount.delete_!).isEmpty
-        ResponseSender.sendMessage("account deleted: "+deleted)
+        if (deleted)
+          ResponseSender.sendMessage(SuccessResponse(account.id,"account deleted"))
+        else
+          ResponseSender.sendMessage(ErrorResponse(account.id,"account not deleted"))
         deleted
       }
       case _ => {
-        ResponseSender.sendMessage("account does not exist")
+        ResponseSender.sendMessage(ErrorResponse(account.id,"account does not exist"))
         false
       }
     }

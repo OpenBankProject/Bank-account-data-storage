@@ -34,6 +34,7 @@ package code.util
 import com.rabbitmq.client.{ConnectionFactory,Channel}
 import net.liftmodules.amqp.{AMQPSender,StringAMQPSender,AMQPMessage}
 import scala.actors._
+import code.model.Response
 
 object ResponseSender {
   val factory = new ConnectionFactory {
@@ -49,16 +50,7 @@ object ResponseSender {
   //StringAMQPSender(ConnectionFactory, EXCHANGE, QUEUE_ROUTING_KEY)
   val amqp = new StringAMQPSender(factory, "directExchange2", "response")
 
-  def sendMessage(message: String) = {  //string
-     amqp ! AMQPMessage(message)
+  def sendMessage(response: Response) = {
+     amqp ! AMQPMessage(response)
   }
 }
-
-// class StringAMQPSender(cf: ConnectionFactory, exchange: String, routingKey: String)
-//  extends AMQPSender[String](cf, exchange, routingKey) {   //string
-//   override def configure(channel: Channel) = {
-//     val conn = cf.newConnection()
-//     val channel = conn.createChannel()
-//     channel
-//   }
-// }
