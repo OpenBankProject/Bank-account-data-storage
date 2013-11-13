@@ -24,7 +24,6 @@ class BankAccountSerializedAMQPDispatcher[T](factory: ConnectionFactory)
 object BankAccountAMQPListener {
   lazy val factory = new ConnectionFactory {
     import ConnectionFactory._
-    // localhost is a machine on your network with rabbitmq listening on port 5672
     setHost("localhost")
     setPort(DEFAULT_AMQP_PORT)
     setUsername(Props.get("connection.user", DEFAULT_USER))

@@ -35,15 +35,16 @@ import com.rabbitmq.client.{ConnectionFactory,Channel}
 import net.liftmodules.amqp.{AMQPSender,StringAMQPSender,AMQPMessage}
 import scala.actors._
 import code.model.Response
+import net.liftweb.util._
 
 object ResponseSender {
   val factory = new ConnectionFactory {
     import ConnectionFactory._
 
-    setHost(DEFAULT_HOST)
+    setHost("localhost")
     setPort(DEFAULT_AMQP_PORT)
-    setUsername(DEFAULT_USER)
-    setPassword(DEFAULT_PASS)
+    setUsername(Props.get("connection.user", DEFAULT_USER))
+    setPassword(Props.get("connection.password", DEFAULT_PASS))
     setVirtualHost(DEFAULT_VHOST)
   }
 
