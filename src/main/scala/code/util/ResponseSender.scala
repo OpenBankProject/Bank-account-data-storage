@@ -48,7 +48,7 @@ object ResponseSender {
     setVirtualHost(DEFAULT_VHOST)
   }
 
-  //StringAMQPSender(ConnectionFactory, EXCHANGE, QUEUE_ROUTING_KEY)
+              // StringAMQPSender(ConnectionFactory, EXCHANGE, QUEUE_ROUTING_KEY)
   val amqp = new StringAMQPSender(factory, "directExchange2", "response")
 
   def sendMessage(response: Response) = {

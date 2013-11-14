@@ -1,0 +1,5 @@
+# Properties in this file will be read when running in dev mode
+importer.confdir=configs
+#importer.apiurl=http://localhost:8080
+connection.user=
+connection.password=
