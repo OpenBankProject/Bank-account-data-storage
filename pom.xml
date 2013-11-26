@@ -134,6 +134,13 @@
       <artifactId>bcpg-jdk15on</artifactId>
       <version>1.47</version>
     </dependency>
+    <dependency>
+			<groupId>org.kapott.hbci4java</groupId>
+			<artifactId>hbci4java-java</artifactId>
+			<version>2.5.12</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/src/main/resources/hbci4java.jar</systemPath>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -288,6 +295,16 @@
 						</classpathContainers>
 					</configuration>
 				</plugin>
+				<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.0</version>
+				<configuration>
+					<source>5</source>
+					<target>5</target>
+					<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
 			</plugins>
 	</build>
 	<reporting>

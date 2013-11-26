@@ -45,8 +45,8 @@ import net.liftweb.util.Helpers
 import javax.mail.{ Authenticator, PasswordAuthentication }
 import java.io.FileInputStream
 import java.io.File
-import code.util.BankAccountAMQPListener
-import code.model.BankAccountDetails
+import com.tesobe.util.BankAccountAMQPListener
+import com.tesobe.model.BankAccountDetails
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -157,7 +157,7 @@ class Boot extends Loggable{
     logger.info("running mode: " + runningMode)
 
     // where to search snippet
-    LiftRules.addToPackages("code")
+    LiftRules.addToPackages("com")
     Schemifier.schemify(true, Schemifier.infoF _, BankAccountDetails)
 
     BankAccountAMQPListener.startListen

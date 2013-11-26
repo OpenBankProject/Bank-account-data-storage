@@ -29,12 +29,12 @@ Berlin 13359, Germany
   Ayoub Benali: ayoub AT tesobe DOT com
 
  */
-package code.util
+package com.tesobe.util
 
 import com.rabbitmq.client.{ConnectionFactory,Channel}
 import net.liftmodules.amqp.{AMQPSender,StringAMQPSender,AMQPMessage}
 import scala.actors._
-import code.model.Response
+import com.tesobe.model.Response
 import net.liftweb.util._
 
 object ResponseSender {
