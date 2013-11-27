@@ -29,32 +29,23 @@ Berlin 13359, Germany
   Ayoub Benali: ayoub AT tesobe DOT com
 
  */
-package com.tesobe.util
+package com.tesobe.snippet
 
-import net.liftmodules.amqp.{AMQPSender,StringAMQPSender,AMQPMessage}
-import net.liftweb.util._
-import scala.actors._
+import net.liftweb.http._
+import net.liftweb.util.Helpers._
+import com.tesobe.util.TransactionAccountUpdateAMQPListener
 
-import com.rabbitmq.client.{ConnectionFactory,Channel}
-import com.tesobe.model.Response
-
-// Sends message to response queue, if creating/ updating/ deleting account was successful.
-
-object ResponseSender {
-  val factory = new ConnectionFactory {
-    import ConnectionFactory._
-
-    setHost("localhost")
-    setPort(DEFAULT_AMQP_PORT)
-    setUsername(Props.get("connection.user", DEFAULT_USER))
-    setPassword(Props.get("connection.password", DEFAULT_PASS))
-    setVirtualHost(DEFAULT_VHOST)
-  }
-
-              // StringAMQPSender(ConnectionFactory, EXCHANGE, QUEUE_ROUTING_KEY)
-  val amqp = new StringAMQPSender(factory, "directExchange2", "response")
-
-  def sendMessage(response: Response) = {
-     amqp ! AMQPMessage(response)
+// Get passphrase from index.html to decrypt encrypted data.
+class GetPassphrase {
+  def render = {
+    if (TransactionAccountUpdateAMQPListener.decyrptionPassphrase == "") {
+      "type=text" #> SHtml.password("", TransactionAccountUpdateAMQPListener.decyrptionPassphrase = _) &
+        "type=submit" #> SHtml.submit("Enter", () => {
+          TransactionAccountUpdateAMQPListener.startListen
+          S.notice("Passphrase for decrypting sent.")
+        })
+    } else {
+      "div *" #> "The pass phrase is already set."
+    }
   }
 }

@@ -32,21 +32,19 @@ Berlin 13359, Germany
 package bootstrap.liftweb
 
 
-import net.liftweb._
-import util._
-import common._
-import http._
-import mapper._
-import net.liftweb.util.Helpers._
-import net.liftweb.json.JsonDSL._
-import net.liftweb.util.Schedule
-import net.liftweb.http.js.jquery.JqJsCmds
-import net.liftweb.util.Helpers
+import java.io.{ File, FileInputStream}
 import javax.mail.{ Authenticator, PasswordAuthentication }
-import java.io.FileInputStream
-import java.io.File
-import com.tesobe.util.BankAccountAMQPListener
+import net.liftweb._
+import net.liftweb.common._
+import net.liftweb.http._
+import net.liftweb.http.js.jquery.JqJsCmds
+import net.liftweb.json.JsonDSL._
+import net.liftweb.mapper._
+import net.liftweb.util._
+import net.liftweb.util.Helpers._
+
 import com.tesobe.model.BankAccountDetails
+import com.tesobe.util.BankAccountAMQPListener
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -157,7 +155,7 @@ class Boot extends Loggable{
     logger.info("running mode: " + runningMode)
 
     // where to search snippet
-    LiftRules.addToPackages("com")
+    LiftRules.addToPackages("com.tesobe")
     Schemifier.schemify(true, Schemifier.infoF _, BankAccountDetails)
 
     BankAccountAMQPListener.startListen

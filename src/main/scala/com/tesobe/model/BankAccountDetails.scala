@@ -29,32 +29,21 @@ Berlin 13359, Germany
   Ayoub Benali: ayoub AT tesobe DOT com
 
  */
-package com.tesobe.util
+package com.tesobe.model
 
-import net.liftmodules.amqp.{AMQPSender,StringAMQPSender,AMQPMessage}
-import net.liftweb.util._
-import scala.actors._
+import net.liftweb.mapper._
 
-import com.rabbitmq.client.{ConnectionFactory,Channel}
-import com.tesobe.model.Response
+class BankAccountDetails extends LongKeyedMapper[BankAccountDetails] {
+  def getSingleton = BankAccountDetails
 
-// Sends message to response queue, if creating/ updating/ deleting account was successful.
+  def primaryKeyField = id
+  object id extends MappedLongIndex(this)
+  object accountNumber extends MappedString(this, 32)
+  object bankNationalIdentifier extends MappedString(this, 32)
+  object pinCode extends MappedString(this, 1024)
+}
 
-object ResponseSender {
-  val factory = new ConnectionFactory {
-    import ConnectionFactory._
-
-    setHost("localhost")
-    setPort(DEFAULT_AMQP_PORT)
-    setUsername(Props.get("connection.user", DEFAULT_USER))
-    setPassword(Props.get("connection.password", DEFAULT_PASS))
-    setVirtualHost(DEFAULT_VHOST)
-  }
-
-              // StringAMQPSender(ConnectionFactory, EXCHANGE, QUEUE_ROUTING_KEY)
-  val amqp = new StringAMQPSender(factory, "directExchange2", "response")
-
-  def sendMessage(response: Response) = {
-     amqp ! AMQPMessage(response)
-  }
+object BankAccountDetails extends BankAccountDetails with LongKeyedMetaMapper[BankAccountDetails]
+{
+  override def dbIndexes = UniqueIndex(accountNumber, bankNationalIdentifier) ::super.dbIndexes
 }

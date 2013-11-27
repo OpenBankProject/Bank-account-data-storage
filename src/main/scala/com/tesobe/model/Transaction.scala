@@ -39,8 +39,7 @@ package com.tesobe.model
  * @param pinData the encrypted PIN for this account
  */
 case class AccountConfig(
-  holder: String,
-  blz: String,
+  bank_national_identifier: String,
   account_number: String,
   pin: String
 )
@@ -57,7 +56,6 @@ case class OBPTransaction(
   details: OBPDetails)
 
 case class OBPAccount(
-  holder: String,
   number: String,
   iban: String,
   kind: String,

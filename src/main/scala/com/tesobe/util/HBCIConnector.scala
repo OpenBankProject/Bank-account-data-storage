@@ -31,24 +31,24 @@ Berlin 13359, Germany
  */
 package com.tesobe.util;
 
-import java.io.File;
-import java.util.Properties;
+import java.io.File
+import java.util.Properties
 import net.liftweb.common.{Box, Full, Failure, Loggable}
-import net.liftweb.util.Helpers.{tryo, randomString};
-import scala.collection.JavaConverters._
+import net.liftweb.util.Helpers.{tryo, randomString}
 import scala.collection.immutable.List
+import scala.collection.JavaConverters._
 import scala.collection.mutable.Map
 
-import org.kapott.hbci.callback.HBCICallbackConsole;
-import org.kapott.hbci.manager.HBCIHandler;
-import org.kapott.hbci.manager.HBCIUtils;
-import org.kapott.hbci.passport.AbstractHBCIPassport;
-import org.kapott.hbci.passport.HBCIPassport;
-import org.kapott.hbci.callback.HBCICallback;
-import org.kapott.hbci.GV.HBCIJob;
-import org.kapott.hbci.status.HBCIExecStatus;
-import org.kapott.hbci.GV_Result.GVRKUms;
-import org.kapott.hbci.GV_Result.GVRKUms.UmsLine;
+import org.kapott.hbci.callback.HBCICallback
+import org.kapott.hbci.callback.HBCICallbackConsole
+import org.kapott.hbci.GV.HBCIJob
+import org.kapott.hbci.GV_Result.GVRKUms
+import org.kapott.hbci.GV_Result.GVRKUms.UmsLine
+import org.kapott.hbci.manager.HBCIHandler
+import org.kapott.hbci.manager.HBCIUtils
+import org.kapott.hbci.passport.AbstractHBCIPassport
+import org.kapott.hbci.passport.HBCIPassport
+import org.kapott.hbci.status.HBCIExecStatus
 
 
 object HBCIConnector extends Loggable

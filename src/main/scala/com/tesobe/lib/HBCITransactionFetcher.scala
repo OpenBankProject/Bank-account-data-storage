@@ -29,30 +29,30 @@ Berlin 13359, Germany
   Ayoub Benali: ayoub AT tesobe DOT com
 
  */
- package com.tesobe.lib
+package com.tesobe.lib
 
-import com.tesobe.util.HBCIConnector
-import scala.collection.JavaConverters._
-import com.tesobe.model._
 import java.text.SimpleDateFormat
-import org.kapott.hbci.manager.HBCIUtils
 import net.liftweb.common.{Box, Full, Failure}
+import scala.collection.JavaConverters._
+
+import com.tesobe.model._
+import com.tesobe.util.HBCIConnector
+import org.kapott.hbci.manager.HBCIUtils
 
 object HBCITransactionFetcher {
 
   def getTransactions(account: AccountConfig): Seq[OBPTransaction] = {
-    val umsLines = HBCIConnector.getUmsLines(account.blz, account.account_number, account.pin)
+    val umsLines = HBCIConnector.getUmsLines(account.bank_national_identifier, account.account_number, account.pin)
     umsLines match {
       case Full(lines) => lines.map{
         l => {
 
           val myBank = OBPBank(
             bic = "",
-            national_identifier = account.blz,
-            name =  HBCIUtils.getNameForBLZ(account.blz))
+            national_identifier = account.bank_national_identifier,
+            name =  HBCIUtils.getNameForBLZ(account.bank_national_identifier))
 
           val myAccount = OBPAccount(
-            holder = account.holder,
             number = account.account_number,
             iban = "",
             kind = "",
@@ -70,7 +70,6 @@ object HBCITransactionFetcher {
             })
 
           val otherAccount = OBPAccount(
-            holder = other.flatMap {b => Option(b.name)}.getOrElse(""),
             number = other.flatMap {b => Option(b.number)}.getOrElse(""),
             iban = other.flatMap {b => Option(b.iban)}.getOrElse(""),
             kind = other.flatMap {b => Option(b.`type`)}.getOrElse(""),

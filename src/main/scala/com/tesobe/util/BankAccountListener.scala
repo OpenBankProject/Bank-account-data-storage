@@ -31,16 +31,18 @@ Berlin 13359, Germany
  */
 package com.tesobe.util
 
-
-import com.rabbitmq.client.{ConnectionFactory,Channel}
 import net.liftmodules.amqp.{AMQPAddListener,AMQPMessage, AMQPDispatcher, SerializedConsumer}
-import scala.actors._
 import net.liftweb.actor._
-import com.tesobe.model.{BankAccount, BankAccountDetails, AddBankAccount, UpdateBankAccount, DeleteBankAccount, SuccessResponse,ErrorResponse}
 import net.liftweb.common.{Full,Box,Empty}
 import net.liftweb.mapper.By
-import net.liftweb.util.Helpers.tryo
 import net.liftweb.util._
+import net.liftweb.util.Helpers.tryo
+import scala.actors._
+
+import com.rabbitmq.client.{ConnectionFactory,Channel}
+import com.tesobe.model.{BankAccount, BankAccountDetails, AddBankAccount, UpdateBankAccount, DeleteBankAccount, SuccessResponse,ErrorResponse}
+
+// Listens to management queue to create, update or delete accounts in the database.
 
 class BankAccountSerializedAMQPDispatcher[T](factory: ConnectionFactory)
     extends AMQPDispatcher[T](factory) {
@@ -75,7 +77,7 @@ object BankAccountAMQPListener {
   def saveBankAccount (account: AddBankAccount) : Boolean = {
     val newAccount: BankAccountDetails = BankAccountDetails.create
     newAccount.accountNumber(account.accountNumber)
-    newAccount.blzIban(account.blzIban)
+    newAccount.bankNationalIdentifier(account.bankNationalIdentifier)
     newAccount.pinCode(account.pinCode)
     val saved = !tryo(newAccount.save).isEmpty
     if (saved)
@@ -87,7 +89,7 @@ object BankAccountAMQPListener {
   }
 
   def updateBankAccount (account: UpdateBankAccount) : Boolean = {
-    BankAccountDetails.find(By(BankAccountDetails.accountNumber, account.accountNumber), By(BankAccountDetails.blzIban, account.blzIban)) match {
+    BankAccountDetails.find(By(BankAccountDetails.accountNumber, account.accountNumber), By(BankAccountDetails.bankNationalIdentifier, account.bankNationalIdentifier)) match {
       case Full(existingAccount) => {
         existingAccount.pinCode(account.pinCode)
         val updated = !tryo(existingAccount.save).isEmpty
@@ -105,7 +107,7 @@ object BankAccountAMQPListener {
   }
 
   def deleteBankAccount (account: DeleteBankAccount) : Boolean = {
-    BankAccountDetails.find(By(BankAccountDetails.accountNumber, account.accountNumber), By(BankAccountDetails.blzIban, account.blzIban)) match {
+    BankAccountDetails.find(By(BankAccountDetails.accountNumber, account.accountNumber), By(BankAccountDetails.bankNationalIdentifier, account.bankNationalIdentifier)) match {
       case Full(existingAccount) => {
         var deleted = !tryo(existingAccount.delete_!).isEmpty
         if (deleted)
