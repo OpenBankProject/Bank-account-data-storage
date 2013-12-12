@@ -1,4 +1,4 @@
-package com.tesobe.lib;
+package com.tesobe.util;
 
 // this code is from http://sloanseaman.com/wordpress/2012/05/13/revisited-pgp-encryptiondecryption-in-java/
 
@@ -62,15 +62,15 @@ public class PGPUtils {
     private static final int   BUFFER_SIZE = 1 << 16; // should always be power of 2
     private static final int   KEY_FLAGS = 27;
     private static final int[] MASTER_KEY_CERTIFICATION_TYPES = new int[]{
-    	PGPSignature.POSITIVE_CERTIFICATION,
-    	PGPSignature.CASUAL_CERTIFICATION,
-    	PGPSignature.NO_CERTIFICATION,
-    	PGPSignature.DEFAULT_CERTIFICATION
+        PGPSignature.POSITIVE_CERTIFICATION,
+        PGPSignature.CASUAL_CERTIFICATION,
+        PGPSignature.NO_CERTIFICATION,
+        PGPSignature.DEFAULT_CERTIFICATION
     };
 
     @SuppressWarnings("unchecked")
     public static PGPPublicKey readPublicKey(InputStream in)
-    	throws IOException, PGPException
+        throws IOException, PGPException
     {
 
         PGPPublicKeyRingCollection keyRingCollection = new PGPPublicKeyRingCollection(PGPUtil.getDecoderStream(in));
@@ -108,9 +108,9 @@ public class PGPUtils {
     }
 
     @SuppressWarnings("unchecked")
-	public static PGPSecretKey readSecretKey(InputStream in)
-		throws IOException, PGPException
-	{
+    public static PGPSecretKey readSecretKey(InputStream in)
+        throws IOException, PGPException
+    {
 
         PGPSecretKeyRingCollection keyRingCollection = new PGPSecretKeyRingCollection(PGPUtil.getDecoderStream(in));
 
@@ -162,7 +162,7 @@ public class PGPUtils {
      * @throws NoSuchProviderException
      */
     public  static PGPPrivateKey findPrivateKey(InputStream keyIn, long keyID, char[] pass)
-    	throws IOException, PGPException, NoSuchProviderException
+        throws IOException, PGPException, NoSuchProviderException
     {
         PGPSecretKeyRingCollection pgpSec = new PGPSecretKeyRingCollection(PGPUtil.getDecoderStream(keyIn));
         return findPrivateKey(pgpSec.getSecretKey(keyID), pass);
@@ -177,9 +177,9 @@ public class PGPUtils {
      * @throws PGPException
      */
     public static PGPPrivateKey findPrivateKey(PGPSecretKey pgpSecKey, char[] pass)
-    	throws PGPException
+        throws PGPException
     {
-    	if (pgpSecKey == null) return null;
+        if (pgpSecKey == null) return null;
 
         PBESecretKeyDecryptor decryptor = new BcPBESecretKeyDecryptorBuilder(new BcPGPDigestCalculatorProvider()).build(pass);
         return pgpSecKey.extractPrivateKey(decryptor);
@@ -189,10 +189,10 @@ public class PGPUtils {
      * decrypt the passed in message stream
      */
     @SuppressWarnings("unchecked")
-	public static void decryptFile(InputStream in, OutputStream out, InputStream keyIn, char[] passwd)
-    	throws Exception
+    public static void decryptFile(InputStream in, OutputStream out, InputStream keyIn, char[] passwd)
+        throws Exception
     {
-    	Security.addProvider(new BouncyCastleProvider());
+        Security.addProvider(new BouncyCastleProvider());
 
         in = org.bouncycastle.openpgp.PGPUtil.getDecoderStream(in);
 
@@ -256,7 +256,7 @@ public class PGPUtils {
 
         if (pbe.isIntegrityProtected()) {
             if (!pbe.verify()) {
-            	throw new PGPException("Message failed integrity check");
+                throw new PGPException("Message failed integrity check");
             }
         }
     }
@@ -269,7 +269,7 @@ public class PGPUtils {
         boolean withIntegrityCheck)
         throws IOException, NoSuchProviderException, PGPException
     {
-    	Security.addProvider(new BouncyCastleProvider());
+        Security.addProvider(new BouncyCastleProvider());
 
         if (armor) {
             out = new ArmoredOutputStream(out);
@@ -300,7 +300,7 @@ public class PGPUtils {
     }
 
     @SuppressWarnings("unchecked")
-	public static void signEncryptFile(
+    public static void signEncryptFile(
         OutputStream out,
         String fileName,
         PGPPublicKey publicKey,
@@ -382,7 +382,7 @@ public class PGPUtils {
     }
 
     public static boolean verifyFile(
-    	InputStream in,
+        InputStream in,
         InputStream keyIn,
         String extractContentFile)
         throws Exception
@@ -455,7 +455,7 @@ public class PGPUtils {
      * @return
      */
     @SuppressWarnings("unchecked")
-	private static boolean hasKeyFlags(PGPPublicKey encKey, int keyUsage) {
+    private static boolean hasKeyFlags(PGPPublicKey encKey, int keyUsage) {
         if (encKey.isMasterKey()) {
             for (int i = 0; i != PGPUtils.MASTER_KEY_CERTIFICATION_TYPES.length; i++) {
                 for (Iterator<PGPSignature> eIt = encKey.getSignaturesOfType(PGPUtils.MASTER_KEY_CERTIFICATION_TYPES[i]); eIt.hasNext();) {

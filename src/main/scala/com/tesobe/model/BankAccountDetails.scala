@@ -23,10 +23,8 @@ Berlin 13359, Germany
   This product includes software developed at
   TESOBE (http://www.tesobe.com/)
   by
-  Simon Redfern : simon AT tesobe DOT com
-  Stefan Bethge : stefan AT tesobe DOT com
-  Everett Sochowski : everett AT tesobe DOT com
   Ayoub Benali: ayoub AT tesobe DOT com
+  Nina Gänsdorfer: nina AT tesobe DOT com
 
  */
 package com.tesobe.model
@@ -43,7 +41,6 @@ class BankAccountDetails extends LongKeyedMapper[BankAccountDetails] {
   object pinCode extends MappedString(this, 1024)
 }
 
-object BankAccountDetails extends BankAccountDetails with LongKeyedMetaMapper[BankAccountDetails]
-{
+object BankAccountDetails extends BankAccountDetails with LongKeyedMetaMapper[BankAccountDetails]{
   override def dbIndexes = UniqueIndex(accountNumber, bankNationalIdentifier) ::super.dbIndexes
 }

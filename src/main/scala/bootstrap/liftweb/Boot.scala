@@ -23,17 +23,14 @@ Berlin 13359, Germany
   This product includes software developed at
   TESOBE (http://www.tesobe.com/)
   by
-  Simon Redfern : simon AT tesobe DOT com
-  Stefan Bethge : stefan AT tesobe DOT com
-  Everett Sochowski : everett AT tesobe DOT com
   Ayoub Benali: ayoub AT tesobe DOT com
+  Nina Gänsdorfer: nina AT tesobe DOT com
 
  */
 package bootstrap.liftweb
 
 
 import java.io.{ File, FileInputStream}
-import javax.mail.{ Authenticator, PasswordAuthentication }
 import net.liftweb._
 import net.liftweb.common._
 import net.liftweb.http._
@@ -136,13 +133,6 @@ class Boot extends Loggable{
 
       DB.defineConnectionManager(DefaultConnectionIdentifier, vendor)
     }
-    Mailer.authenticator = for {
-      user <- Props.get("mail.username")
-      pass <- Props.get("mail.password")
-    } yield new Authenticator {
-      override def getPasswordAuthentication =
-        new PasswordAuthentication(user,pass)
-    }
 
     val runningMode = Props.mode match {
       case Props.RunModes.Production => "Production mode"
@@ -158,7 +148,12 @@ class Boot extends Loggable{
     LiftRules.addToPackages("com.tesobe")
     Schemifier.schemify(true, Schemifier.infoF _, BankAccountDetails)
 
-    BankAccountAMQPListener.startListen
+    // check that we have the private key for decryption
+    Props.get("importer.keyfile") getOrElse {
+      logger.warn("private key location (importer.keyfile) not set in props file!")
+      "key.gpg"
+    }
 
+    BankAccountAMQPListener.startListen
   }
 }

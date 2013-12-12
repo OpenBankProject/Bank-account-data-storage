@@ -23,19 +23,17 @@ Berlin 13359, Germany
   This product includes software developed at
   TESOBE (http://www.tesobe.com/)
   by
-  Simon Redfern : simon AT tesobe DOT com
-  Stefan Bethge : stefan AT tesobe DOT com
-  Everett Sochowski : everett AT tesobe DOT com
   Ayoub Benali: ayoub AT tesobe DOT com
+  Nina Gänsdorfer: nina AT tesobe DOT com
 
  */
 package com.tesobe.model
 
 trait BankAccount{}
 
-case class AddBankAccount(val id: String, val accountNumber : String, val bankNationalIdentifier : String, val pinCode : String) extends BankAccount
-case class UpdateBankAccount(val id: String, val accountNumber : String, val bankNationalIdentifier : String, val pinCode : String) extends BankAccount
-case class DeleteBankAccount(val id: String, val accountNumber : String, val bankNationalIdentifier : String) extends BankAccount
+case class AddBankAccountCredentials(val id: String, val accountNumber : String, val bankNationalIdentifier : String, val pinCode : String) extends BankAccount
+case class UpdateBankAccountCredentials(val id: String, val accountNumber : String, val bankNationalIdentifier : String, val pinCode : String) extends BankAccount
+case class DeleteBankAccountCredentials(val id: String, val accountNumber : String, val bankNationalIdentifier : String) extends BankAccount
 
 trait Response{
   val id: String
@@ -46,7 +44,7 @@ case class SuccessResponse(val id: String, val message: String) extends Response
 case class ErrorResponse(val id: String, val message: String) extends Response
 
 
-case class TransactionBankAccount(
+case class UpdateBankAccount(
   val accountNumber : String,
   val bankNationalIdentifier : String
 )

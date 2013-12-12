@@ -23,10 +23,8 @@ Berlin 13359, Germany
   This product includes software developed at
   TESOBE (http://www.tesobe.com/)
   by
-  Simon Redfern : simon AT tesobe DOT com
-  Stefan Bethge : stefan AT tesobe DOT com
-  Everett Sochowski : everett AT tesobe DOT com
   Ayoub Benali: ayoub AT tesobe DOT com
+  Nina Gänsdorfer: nina AT tesobe DOT com
 
  */
 package com.tesobe.model
@@ -43,7 +41,6 @@ case class AccountConfig(
   account_number: String,
   pin: String
 )
-
 /**
  * Holds the transaction data that is to be pushed to the OBP API.
  */
@@ -56,18 +53,21 @@ case class OBPTransaction(
   details: OBPDetails)
 
 case class OBPAccount(
+  holder: String,
   number: String,
   iban: String,
   kind: String,
-  bank: OBPBank)
+  bank: OBPBank
+)
 
 case class OBPBank(
   bic: String,
   national_identifier: String,
-  name: String)
+  name: String
+)
 
 case class OBPDetails(
-  trans_type: String,
+  kind: String,
   posted: OBPDate,
   completed: OBPDate,
   new_balance: OBPAmount,

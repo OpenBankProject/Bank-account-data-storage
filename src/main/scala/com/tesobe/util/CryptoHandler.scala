@@ -23,19 +23,17 @@ Berlin 13359, Germany
   This product includes software developed at
   TESOBE (http://www.tesobe.com/)
   by
-  Simon Redfern : simon AT tesobe DOT com
-  Stefan Bethge : stefan AT tesobe DOT com
-  Everett Sochowski : everett AT tesobe DOT com
   Ayoub Benali: ayoub AT tesobe DOT com
+  Nina Gänsdorfer: nina AT tesobe DOT com
 
  */
- package com.tesobe.lib
+package com.tesobe.util
 
 import java.io._
-import net.liftweb.common._
+import scala.sys.process._
 import net.liftweb.util.Helpers._
 import net.liftweb.util.Props
-import scala.sys.process._
+import net.liftweb.common._
 
 /**
  * Provides functionality to decrypt a given encrypted password.

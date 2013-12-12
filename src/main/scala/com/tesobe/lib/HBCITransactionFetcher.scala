@@ -23,10 +23,8 @@ Berlin 13359, Germany
   This product includes software developed at
   TESOBE (http://www.tesobe.com/)
   by
-  Simon Redfern : simon AT tesobe DOT com
-  Stefan Bethge : stefan AT tesobe DOT com
-  Everett Sochowski : everett AT tesobe DOT com
   Ayoub Benali: ayoub AT tesobe DOT com
+  Nina Gänsdorfer: nina AT tesobe DOT com
 
  */
 package com.tesobe.lib
@@ -42,54 +40,79 @@ import org.kapott.hbci.manager.HBCIUtils
 object HBCITransactionFetcher {
 
   def getTransactions(account: AccountConfig): Seq[OBPTransaction] = {
-    val umsLines = HBCIConnector.getUmsLines(account.bank_national_identifier, account.account_number, account.pin)
-    umsLines match {
-      case Full(lines) => lines.map{
-        l => {
+    val bankingData = HBCIConnector.getBankingData(account.bank_national_identifier, account.account_number, account.pin)
+    bankingData match {
+      case Full(bd) => {
 
-          val myBank = OBPBank(
-            bic = "",
-            national_identifier = account.bank_national_identifier,
-            name =  HBCIUtils.getNameForBLZ(account.bank_national_identifier))
+        def replaceIfEmpty(valueTotest: String, replacementValue: String): String =
+          if (valueTotest.isEmpty)
+            replacementValue
+          else
+            valueTotest
 
-          val myAccount = OBPAccount(
-            number = account.account_number,
-            iban = "",
-            kind = "",
-            bank = myBank)
+        val myBankBIC = replaceIfEmpty(bd.account.bank.bic, HBCIUtils.getBICForBLZ(account.bank_national_identifier))
+        val myBankNationalID = replaceIfEmpty(bd.account.bank.national_identifier, account.bank_national_identifier)
+        val myBankName = replaceIfEmpty(bd.account.bank.name, HBCIUtils.getNameForBLZ(account.bank_national_identifier))
 
-          val other = Option(l.other)
-          val blz_option  = other.flatMap {b => Option(b.blz)}
+        val myBank = OBPBank(
+          bic = myBankBIC,
+          national_identifier = myBankNationalID,
+          name = myBankName
+        )
 
-          val otherBank = OBPBank(
-            bic = other.flatMap {b => Option(b.bic)}.getOrElse(""),
-            national_identifier = blz_option.getOrElse(""),
-            name = blz_option match {
-              case Some(result) => HBCIUtils.getNameForBLZ(blz_option.getOrElse(""))
-              case None         => ""
-            })
+        val myAccountNumber = replaceIfEmpty(bd.account.number, account.account_number)
+        val myAccount = OBPAccount(
+          holder = bd.account.holder,
+          number = myAccountNumber,
+          iban = bd.account.iban,
+          kind = bd.account.kind,
+          bank = myBank
+        )
 
-          val otherAccount = OBPAccount(
-            number = other.flatMap {b => Option(b.number)}.getOrElse(""),
-            iban = other.flatMap {b => Option(b.iban)}.getOrElse(""),
-            kind = other.flatMap {b => Option(b.`type`)}.getOrElse(""),
-            bank = otherBank)
+        //iterate over the UMLS lines to create the OBP transactions
+        bd.umlsLines.map{
+          l => {
 
-          val formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+            val otherAcc = Option(l.other)
+            val otherBankBLZ = otherAcc.flatMap {account => Option(account.blz)}
+            val otherBankName = otherBankBLZ match {
+              case Some(result) => HBCIUtils.getNameForBLZ(otherBankBLZ.getOrElse(""))
+              case None => ""
+            }
 
-          val details = OBPDetails(
-            trans_type = "",
-            posted = OBPDate(formatter.format(l.bdate)),
-            completed = OBPDate(formatter.format(l.bdate)),
-            new_balance = OBPAmount(l.saldo.toString(),""),
-            value = OBPAmount(l.value.toString(),""),
-            label = l.usage.asScala.mkString ("/"),
-            other_data = l.additional)
+            val otherBank = OBPBank(
+              bic = otherAcc.flatMap {account => Option(account.bic)}.getOrElse(""),
+              national_identifier = otherBankBLZ.getOrElse(""),
+              name = otherBankName
+            )
 
-          OBPTransaction(
-            this_account = myAccount,
-            other_account = otherAccount,
-            details = details)
+            val otherAccount = OBPAccount(
+              holder = otherAcc.flatMap {account => Option(account.name)}.getOrElse("").trim,
+              number = otherAcc.flatMap {account => Option(account.number)}.getOrElse(""),
+              iban = otherAcc.flatMap {account => Option(account.iban)}.getOrElse(""),
+              kind = otherAcc.flatMap {account => Option(account.`type`)}.getOrElse(""),
+              bank = otherBank
+            )
+
+            val country = otherAcc.map(acc => acc.name).getOrElse("")
+            val formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+
+            val details = OBPDetails(
+              kind = Option(l.text).getOrElse(""),
+              posted = OBPDate(formatter.format(l.bdate)),
+              completed = OBPDate(formatter.format(l.bdate)),
+              new_balance = OBPAmount(l.saldo.value.getCurr, l.saldo.value.getDoubleValue.toString),
+              value = OBPAmount(l.value.getCurr, l.value.getDoubleValue.toString),
+              label = l.usage.asScala.mkString ("/"),
+              other_data = Option(l.additional).getOrElse("")
+            )
+
+            OBPTransaction(
+              this_account = myAccount,
+              other_account = otherAccount,
+              details = details
+            )
+          }
         }
       }
       case _ => Nil
