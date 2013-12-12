@@ -23,10 +23,8 @@ Berlin 13359, Germany
   This product includes software developed at
   TESOBE (http://www.tesobe.com/)
   by
-  Simon Redfern : simon AT tesobe DOT com
-  Stefan Bethge : stefan AT tesobe DOT com
-  Everett Sochowski : everett AT tesobe DOT com
   Ayoub Benali: ayoub AT tesobe DOT com
+  Nina Gänsdorfer: nina AT tesobe DOT com
 
  */
 package com.tesobe.util
@@ -35,7 +33,7 @@ import dispatch._
 import java.io.{File, FileInputStream}
 import net.liftmodules.amqp.{AMQPAddListener,AMQPMessage, AMQPDispatcher, SerializedConsumer}
 import net.liftweb.actor._
-import net.liftweb.common.{Full, Box, Empty, Loggable}
+import net.liftweb.common.{Full, Box, Empty, Loggable, Failure}
 import net.liftweb.json._
 import net.liftweb.mapper.By
 import net.liftweb.util._
@@ -43,13 +41,14 @@ import net.liftweb.util.Helpers.tryo
 import scala.actors._
 import scala.concurrent
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Failure, Success}
 
 import com.rabbitmq.client.{ConnectionFactory,Channel}
-import com.tesobe.lib.{PgpEncryption, HBCITransactionFetcher}
-import com.tesobe.model.{TransactionBankAccount, BankAccountDetails, AccountConfig, OBPTransactionWrapper}
+import com.tesobe.lib.HBCITransactionFetcher
+import com.tesobe.model.{UpdateBankAccount, BankAccountDetails, AccountConfig, OBPTransactionWrapper}
 
-// Listens to Updates of the account data to display the relevant transactions.
+
+// an AMQP dispatcher that waits for message coming from a specif queue
+// and dispatching them to the subscribed actors
 
 class TransactionAccountUpdateAMQPDispatcher[T](factory: ConnectionFactory)
     extends AMQPDispatcher[T](factory) {
@@ -61,63 +60,73 @@ class TransactionAccountUpdateAMQPDispatcher[T](factory: ConnectionFactory)
   }
 }
 
-object TransactionAccountUpdateAMQPListener extends Loggable {
+object TransactionAccountUpdateAMQPListener extends Loggable with CryptoHandler{
 
   var decyrptionPassphrase = ""
 
   implicit val formats = DefaultFormats
   lazy val factory = new ConnectionFactory {
     import ConnectionFactory._
-    setHost("localhost")
+    setHost(Props.get("connection.host", "localhost"))
     setPort(DEFAULT_AMQP_PORT)
     setUsername(Props.get("connection.user", DEFAULT_USER))
     setPassword(Props.get("connection.password", DEFAULT_PASS))
     setVirtualHost(DEFAULT_VHOST)
   }
 
-  val amqp = new TransactionAccountUpdateAMQPDispatcher[TransactionBankAccount](factory)
+  val amqp = new TransactionAccountUpdateAMQPDispatcher[UpdateBankAccount](factory)
 
   val transactionAccountUpdateListener = new LiftActor {
     protected def messageHandler = {
-      case msg@AMQPMessage(contents: TransactionBankAccount) => searchDatabaseForAccount(contents)
+      case msg@AMQPMessage(content: UpdateBankAccount) => {
+        logger.info("got message to update account/bank: " + content.accountNumber+"/"+content.bankNationalIdentifier)
+        searchAndUpdateAccount(content)
+      }
       case _ => {}
     }
   }
 
-  def searchDatabaseForAccount (account: TransactionBankAccount) = {
-    BankAccountDetails.find(By(BankAccountDetails.accountNumber, account.accountNumber), By(BankAccountDetails.bankNationalIdentifier, account.bankNationalIdentifier)) match {
-      case Full(foundAccount) => {
-        for {
-          privateKeyPath <- Props.get("decryption.privateKeyPath")
-          privateKey <- tryo { new FileInputStream (new File (privateKeyPath)) }
-        } yield {
-          val pinDecrypted = PgpEncryption.decrypt(foundAccount.pinCode.getBytes, privateKey, decyrptionPassphrase.toCharArray)
-          val transactions = HBCITransactionFetcher.getTransactions(AccountConfig(account.bankNationalIdentifier, account.accountNumber, pinDecrypted.map(_.toChar).mkString))
+  def searchAndUpdateAccount (account: UpdateBankAccount): Unit = {
+    val foundAccount: Box[BankAccountDetails] =
+      BankAccountDetails.find(
+        By(BankAccountDetails.accountNumber, account.accountNumber),
+        By(BankAccountDetails.bankNationalIdentifier, account.bankNationalIdentifier)
+      ) match {
+        case Full(a) => Full(a)
+        case _ => Failure("account " + account.accountNumber + " at bank " + account.bankNationalIdentifier + " not found")
+      }
+
+    val posted: Box[Unit] =
+      for{
+        acc <- foundAccount
+        pinDecrypted <- decryptPin(acc.pinCode,decyrptionPassphrase)
+      } yield {
+          import scala.util.{Failure, Success}
+          val transactions = HBCITransactionFetcher.getTransactions(AccountConfig(account.bankNationalIdentifier, account.accountNumber, pinDecrypted))
           val transactionHulls = transactions.map(OBPTransactionWrapper(_))
           val json = compact(render(Extraction.decompose(transactionHulls)))
           val req =
-            url(Props.get("importer.apiurl", "http://localhost:8080") +
+            url(Props.get("importer.apiurl", "http://localhost:8000") +
             "/api/transactions"+
             "?secret=" + Props.get("importer.postSecret","")
-            ).POST.
-            setHeader("Content-Type", "application/json; charset=utf-8").
-            setBody(json.getBytes("UTF-8")) // we have to give the encoding
+            )
+            .POST
+            .setHeader("Content-Type", "application/json; charset=utf-8")
+            .setBody(json.getBytes("UTF-8")) // we have to give the encoding
           val result: concurrent.Future[String] = Http(req OK as.String)
           result onComplete{
-            case Failure(l) => logger.error("got an error while posting to OBP: " + l.getMessage)
+            case Failure(l) => logger.error("got an error while posting to OBP: \n" + l.getMessage)
             case Success(r) => logger.info("posting to OBP succeeded")
           }
         }
-      }
-      case _ => {
-        logger.warn("----- didn't find an account -----")
+      posted match {
+        case Failure(msg, _, _) => logger.error("Error: \n" + msg)
+        case _ =>
       }
     }
-  }
 
   def startListen = {
     amqp ! AMQPAddListener(transactionAccountUpdateListener)
   }
 
 }
-

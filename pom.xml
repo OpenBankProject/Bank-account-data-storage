@@ -134,11 +134,11 @@
 			<scope>runtime</scope>
 		</dependency>
     <!-- to decrypt secret data -->
-    <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcpg-jdk15on</artifactId>
-      <version>1.47</version>
-    </dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcpg-jdk15on</artifactId>
+			<version>1.47</version>
+		</dependency>
     <dependency>
 			<groupId>org.kapott.hbci4java</groupId>
 			<artifactId>hbci4java-java</artifactId>

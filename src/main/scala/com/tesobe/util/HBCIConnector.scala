@@ -23,10 +23,8 @@ Berlin 13359, Germany
   This product includes software developed at
   TESOBE (http://www.tesobe.com/)
   by
-  Simon Redfern : simon AT tesobe DOT com
-  Stefan Bethge : stefan AT tesobe DOT com
-  Everett Sochowski : everett AT tesobe DOT com
   Ayoub Benali: ayoub AT tesobe DOT com
+  Nina Gänsdorfer: nina AT tesobe DOT com
 
  */
 package com.tesobe.util;
@@ -49,12 +47,16 @@ import org.kapott.hbci.manager.HBCIUtils
 import org.kapott.hbci.passport.AbstractHBCIPassport
 import org.kapott.hbci.passport.HBCIPassport
 import org.kapott.hbci.status.HBCIExecStatus
+import com.tesobe.model.{OBPAccount,OBPBank}
 
 
-object HBCIConnector extends Loggable
-{
-  def getUmsLines(blz: String, accountNumber: String, pin: String): Box[List[UmsLine]] = {
+case class BankingData(
+  val account: OBPAccount, //the account from where the HBCI request is done.
+  val umlsLines : List[UmsLine] //the transactions of the account
+)
 
+object HBCIConnector extends Loggable {
+  def getBankingData(blz: String, accountNumber: String, pin: String): Box[BankingData] = {
     val passphrase = randomString(5)
 
     lazy val settings: Map[Int,String] = Map(
@@ -76,12 +78,9 @@ object HBCIConnector extends Loggable
 
     // HBCICallbackConsole requires interaction with the console. We override callback to read the data from the settings map.
     object callback extends HBCICallbackConsole{
-      override def callback(passport: org.kapott.hbci.passport.HBCIPassport, reason: Int, msg: String, datatype: Int, retData: StringBuffer)
-      {
+      override def callback(passport: org.kapott.hbci.passport.HBCIPassport, reason: Int, msg: String, datatype: Int, retData: StringBuffer){
         settings.get(reason) match{
-          case Some(value) => {
-            retData.replace(0,retData.length(),value)
-          }
+          case Some(value) => retData.replace(0,retData.length(),value)
           case _ => super.callback(passport, reason, msg, datatype, retData)
         }
       }
@@ -90,15 +89,17 @@ object HBCIConnector extends Loggable
     // This method has to be called before every other HBCIUtils-method.
     HBCIUtils.init(null, callback)
 
-    // According to the documentation of hbci4java, there should not be an https:// before the url for PinTan.
+    // According to the documentation of hbci4java, there should not be an https:// before the UTL for PinTan.
     val hbciURL =  HBCIUtils.getPinTanURLForBLZ(blz).stripPrefix("https://")
 
-    def umsLines: Box[List[UmsLine]] =  tryo{
+    def bankingData: Box[BankingData] =  tryo{
 
-      // Create a random file for storing credentials necessary for HBCI.
+      // Create a random file for storing bank account credentials necessary for HBCI.
       val filepath = "passport_pintan_"+randomString(5)+".dat"
+      //the maximum level of logging
       val loglevel = "5"
 
+      //HBCI Kernel settings
       HBCIUtils.setParam("client.connection.localPort",null);
       HBCIUtils.setParam("comm.standard.socks.server",null);
       HBCIUtils.setParam("log.loglevel.default", loglevel);
@@ -113,9 +114,9 @@ object HBCIConnector extends Loggable
       HBCIUtils.setParam("client.passport.PinTan.proxypass",null);
       HBCIUtils.setParam("client.passport.PinTan.init","1");
 
-      // Get HBCI-version from passport or the blz-file, the default for PinTan is "plus".
+      // Get HBCI-version from passport or the BLZ-file, the default for PinTan is "plus".
       val passport= AbstractHBCIPassport.getInstance()
-      val pversion: String ={
+      val passportHBCIVersion: String ={
         val hbciversion = passport.getHBCIVersion
         if (hbciversion.isEmpty){
           val version = HBCIUtils.getPinTanVersionForBLZ(blz)
@@ -127,7 +128,8 @@ object HBCIConnector extends Loggable
         else
           hbciversion
       }
-      HBCIUtils.setParam("client.passport.hbciversion.default", pversion);
+
+      HBCIUtils.setParam("client.passport.hbciversion.default", passportHBCIVersion);
 
       HBCIUtils.setParam("action.resetBPD","1");
       HBCIUtils.setParam("action.resetUPD","1");
@@ -154,12 +156,36 @@ object HBCIConnector extends Loggable
         case _ => Nil
       }
 
+      val thisAccount = passport.getAccount(accountNumber)
+      def fullStringOrEmpty(s: String): String =
+        if(s == null)
+          ""
+        else
+          s
+
+      val myBank = OBPBank(
+        bic = fullStringOrEmpty(thisAccount.bic),
+        national_identifier = fullStringOrEmpty(thisAccount.blz),
+        name = fullStringOrEmpty(passport.getInstName)
+      )
+      val myAccount = OBPAccount(
+        holder = fullStringOrEmpty(thisAccount.name) + fullStringOrEmpty(thisAccount.name2),
+        number = fullStringOrEmpty(thisAccount.number),
+        iban = fullStringOrEmpty(thisAccount.iban),
+        kind  = fullStringOrEmpty(thisAccount.`type`),
+        bank = myBank
+      )
+      val transactions = result
+      val bd = BankingData(
+        myAccount,
+        transactions
+      )
+
       if (hbciHandle!=null) {
         hbciHandle.close();
       } else if (passport!=null) {
         passport.close();
       }
-
       // Delete file with credentials.
       tryo {
         new File(filepath)
@@ -169,14 +195,15 @@ object HBCIConnector extends Loggable
               logger.error("could not delete file "+filepath)
           }
         }
-      result
+      bd
     }
 
     if (hbciURL.isEmpty)
-      Failure ("no hbci url for blz "+blz+" available")
+      Failure ("no HBCI URL available for BLZ "+blz)
     else{
       settings += ((HBCICallback.NEED_HOST, hbciURL))
-      umsLines
+      bankingData
+      //TODO: add login if something is wrong
     }
   }
 }

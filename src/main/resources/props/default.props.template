@@ -1,5 +1,5 @@
-# Properties in this file will be read when running in dev mode
-importer.confdir=configs
-#importer.apiurl=http://localhost:8080
-connection.user=
-connection.password=
+#importer.apiurl==FILL_ME
+#importer.keyfile==FILL_ME
+#connection.host==FILL_ME
+#connection.user==FILL_ME
+#connection.password=FILL_ME

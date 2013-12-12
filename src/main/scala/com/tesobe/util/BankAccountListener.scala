@@ -23,10 +23,8 @@ Berlin 13359, Germany
   This product includes software developed at
   TESOBE (http://www.tesobe.com/)
   by
-  Simon Redfern : simon AT tesobe DOT com
-  Stefan Bethge : stefan AT tesobe DOT com
-  Everett Sochowski : everett AT tesobe DOT com
   Ayoub Benali: ayoub AT tesobe DOT com
+  Nina Gänsdorfer: nina AT tesobe DOT com
 
  */
 package com.tesobe.util
@@ -40,7 +38,7 @@ import net.liftweb.util.Helpers.tryo
 import scala.actors._
 
 import com.rabbitmq.client.{ConnectionFactory,Channel}
-import com.tesobe.model.{BankAccount, BankAccountDetails, AddBankAccount, UpdateBankAccount, DeleteBankAccount, SuccessResponse,ErrorResponse}
+import com.tesobe.model.{BankAccount, BankAccountDetails, AddBankAccountCredentials, UpdateBankAccountCredentials, DeleteBankAccountCredentials, SuccessResponse,ErrorResponse}
 
 // Listens to management queue to create, update or delete accounts in the database.
 
@@ -57,7 +55,7 @@ class BankAccountSerializedAMQPDispatcher[T](factory: ConnectionFactory)
 object BankAccountAMQPListener {
   lazy val factory = new ConnectionFactory {
     import ConnectionFactory._
-    setHost("localhost")
+    setHost(Props.get("connection.host","localhost"))
     setPort(DEFAULT_AMQP_PORT)
     setUsername(Props.get("connection.user", DEFAULT_USER))
     setPassword(Props.get("connection.password", DEFAULT_PASS))
@@ -68,13 +66,13 @@ object BankAccountAMQPListener {
 
   val bankAccountListener = new LiftActor {
     protected def messageHandler = {
-      case msg@AMQPMessage(contents: AddBankAccount) => saveBankAccount(contents)
-      case msg@AMQPMessage(contents: UpdateBankAccount) => updateBankAccount(contents)
-      case msg@AMQPMessage(contents: DeleteBankAccount) => deleteBankAccount(contents)
+      case msg@AMQPMessage(contents: AddBankAccountCredentials) => saveBankAccount(contents)
+      case msg@AMQPMessage(contents: UpdateBankAccountCredentials) => updateBankAccount(contents)
+      case msg@AMQPMessage(contents: DeleteBankAccountCredentials) => deleteBankAccount(contents)
     }
   }
 
-  def saveBankAccount (account: AddBankAccount) : Boolean = {
+  def saveBankAccount (account: AddBankAccountCredentials) : Boolean = {
     val newAccount: BankAccountDetails = BankAccountDetails.create
     newAccount.accountNumber(account.accountNumber)
     newAccount.bankNationalIdentifier(account.bankNationalIdentifier)
@@ -88,7 +86,7 @@ object BankAccountAMQPListener {
 
   }
 
-  def updateBankAccount (account: UpdateBankAccount) : Boolean = {
+  def updateBankAccount (account: UpdateBankAccountCredentials) : Boolean = {
     BankAccountDetails.find(By(BankAccountDetails.accountNumber, account.accountNumber), By(BankAccountDetails.bankNationalIdentifier, account.bankNationalIdentifier)) match {
       case Full(existingAccount) => {
         existingAccount.pinCode(account.pinCode)
@@ -106,7 +104,7 @@ object BankAccountAMQPListener {
     }
   }
 
-  def deleteBankAccount (account: DeleteBankAccount) : Boolean = {
+  def deleteBankAccount (account: DeleteBankAccountCredentials) : Boolean = {
     BankAccountDetails.find(By(BankAccountDetails.accountNumber, account.accountNumber), By(BankAccountDetails.bankNationalIdentifier, account.bankNationalIdentifier)) match {
       case Full(existingAccount) => {
         var deleted = !tryo(existingAccount.delete_!).isEmpty
