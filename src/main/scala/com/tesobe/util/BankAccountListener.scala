@@ -78,6 +78,9 @@ object BankAccountAMQPListener {
     newAccount.bankNationalIdentifier(account.bankNationalIdentifier)
     newAccount.pinCode(account.pinCode)
     val saved = !tryo(newAccount.save).isEmpty
+    //TODO: After saving the account send a message the API to create
+    //an account in the database, and grant the user an owner view
+    //on the account
     if (saved)
       ResponseSender.sendMessage(SuccessResponse(account.id,"account saved"))
     else
