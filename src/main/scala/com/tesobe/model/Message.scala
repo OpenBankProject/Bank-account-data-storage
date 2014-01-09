@@ -32,27 +32,35 @@ package com.tesobe.model
 trait BankAccount{}
 
 case class AddBankAccountCredentials(
-  val id: String,
-  val accountNumber : String,
-  val bankNationalIdentifier : String,
-  val pinCode : String,
-  //user id of the account owner
-  val accountOwner: String
+  id: String,
+  accountNumber : String,
+  bankNationalIdentifier : String,
+  pinCode : String,
+  accountOwnerId: String,
+  accountOwnerProvider: String
 ) extends BankAccount
 
-case class UpdateBankAccountCredentials(val id: String, val accountNumber : String, val bankNationalIdentifier : String, val pinCode : String) extends BankAccount
-case class DeleteBankAccountCredentials(val id: String, val accountNumber : String, val bankNationalIdentifier : String) extends BankAccount
+case class UpdateBankAccountCredentials(id: String, accountNumber : String, bankNationalIdentifier : String, pinCode : String) extends BankAccount
+case class DeleteBankAccountCredentials(id: String, accountNumber : String, bankNationalIdentifier : String) extends BankAccount
 
 trait Response{
   val id: String
   val message: String
 }
 
-case class SuccessResponse(val id: String, val message: String) extends Response
-case class ErrorResponse(val id: String, val message: String) extends Response
+case class SuccessResponse(id: String, message: String) extends Response
+case class ErrorResponse(id: String, message: String) extends Response
+
+case class CreateBankAccount(
+  accountOwnerId: String,
+  accountOwnerProvider: String,
+  accountNumber: String,
+  bankIdentifier: String,
+  bankName: String
+)
 
 
 case class UpdateBankAccount(
-  val accountNumber : String,
-  val bankNationalIdentifier : String
+  accountNumber : String,
+  bankNationalIdentifier : String
 )

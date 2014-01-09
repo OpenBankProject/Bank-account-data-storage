@@ -35,11 +35,11 @@ import net.liftweb.common.{Full,Box,Empty}
 import net.liftweb.mapper.By
 import net.liftweb.util._
 import net.liftweb.util.Helpers.tryo
+import org.kapott.hbci.manager.HBCIUtils
 import scala.actors._
 
 import com.rabbitmq.client.{ConnectionFactory,Channel}
-import com.tesobe.model.{BankAccount, BankAccountDetails, AddBankAccountCredentials, UpdateBankAccountCredentials, DeleteBankAccountCredentials, SuccessResponse,ErrorResponse}
-
+import com.tesobe.model._
 // Listens to management queue to create, update or delete accounts in the database.
 
 class BankAccountSerializedAMQPDispatcher[T](factory: ConnectionFactory)
@@ -81,10 +81,20 @@ object BankAccountAMQPListener {
     //TODO: After saving the account send a message the API to create
     //an account in the database, and grant the user an owner view
     //on the account
-    if (saved)
-      ResponseSender.sendMessage(SuccessResponse(account.id,"account saved"))
+    if (saved){
+      ResponseSender.sendMessageForWebApp(SuccessResponse(account.id,"account saved"))
+      ResponseSender.sendMessageForAPI(
+        CreateBankAccount(
+          account.accountOwnerId,
+          account.accountOwnerProvider,
+          account.accountNumber,
+          account.bankNationalIdentifier,
+          HBCIUtils.getNameForBLZ(account.bankNationalIdentifier)
+        )
+      )
+    }
     else
-      ResponseSender.sendMessage(ErrorResponse(account.id,"account already exists"))
+      ResponseSender.sendMessageForWebApp(ErrorResponse(account.id,"account already exists"))
     saved
 
   }
@@ -95,13 +105,13 @@ object BankAccountAMQPListener {
         existingAccount.pinCode(account.pinCode)
         val updated = !tryo(existingAccount.save).isEmpty
         if (updated)
-          ResponseSender.sendMessage(SuccessResponse(account.id,"account updated"))
+          ResponseSender.sendMessageForWebApp(SuccessResponse(account.id,"account updated"))
         else
-          ResponseSender.sendMessage(ErrorResponse(account.id,"account not updated"))
+          ResponseSender.sendMessageForWebApp(ErrorResponse(account.id,"account not updated"))
         updated
       }
       case _ => {
-        ResponseSender.sendMessage(ErrorResponse(account.id,"account does not exist"))
+        ResponseSender.sendMessageForWebApp(ErrorResponse(account.id,"account does not exist"))
         false
       }
     }
@@ -112,13 +122,13 @@ object BankAccountAMQPListener {
       case Full(existingAccount) => {
         var deleted = !tryo(existingAccount.delete_!).isEmpty
         if (deleted)
-          ResponseSender.sendMessage(SuccessResponse(account.id,"account deleted"))
+          ResponseSender.sendMessageForWebApp(SuccessResponse(account.id,"account deleted"))
         else
-          ResponseSender.sendMessage(ErrorResponse(account.id,"account not deleted"))
+          ResponseSender.sendMessageForWebApp(ErrorResponse(account.id,"account not deleted"))
         deleted
       }
       case _ => {
-        ResponseSender.sendMessage(ErrorResponse(account.id,"account does not exist"))
+        ResponseSender.sendMessageForWebApp(ErrorResponse(account.id,"account does not exist"))
         false
       }
     }
