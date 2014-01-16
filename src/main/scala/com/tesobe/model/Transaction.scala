@@ -29,6 +29,7 @@ Berlin 13359, Germany
  */
 package com.tesobe.model
 
+import java.util.Date
 /**
  * Holds the configuration of an account.
  *
@@ -75,7 +76,7 @@ case class OBPDetails(
   label: String,
   other_data: String)
 
-case class OBPDate(`$dt`: String)
+case class OBPDate(`$dt`: Date)
 
 case class OBPAmount(
   currency: String,

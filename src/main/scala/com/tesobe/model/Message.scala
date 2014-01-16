@@ -35,6 +35,7 @@ case class AddBankAccountCredentials(
   id: String,
   accountNumber : String,
   bankNationalIdentifier : String,
+  bankName: String,
   pinCode : String,
   accountOwnerId: String,
   accountOwnerProvider: String

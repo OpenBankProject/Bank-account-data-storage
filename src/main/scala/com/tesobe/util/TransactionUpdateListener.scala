@@ -64,7 +64,6 @@ object TransactionAccountUpdateAMQPListener extends Loggable with CryptoHandler{
 
   var decyrptionPassphrase = ""
 
-  implicit val formats = DefaultFormats
   lazy val factory = new ConnectionFactory {
     import ConnectionFactory._
     setHost(Props.get("connection.host", "localhost"))
@@ -102,6 +101,10 @@ object TransactionAccountUpdateAMQPListener extends Loggable with CryptoHandler{
         pinDecrypted <- decryptPin(acc.pinCode,decyrptionPassphrase)
       } yield {
           import scala.util.{Failure, Success}
+          import java.text.SimpleDateFormat
+          implicit val formats = new net.liftweb.json.DefaultFormats {
+             override def dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+           }
           val transactions = HBCITransactionFetcher.getTransactions(AccountConfig(account.bankNationalIdentifier, account.accountNumber, pinDecrypted))
           val transactionHulls = transactions.map(OBPTransactionWrapper(_))
           val json = compact(render(Extraction.decompose(transactionHulls)))

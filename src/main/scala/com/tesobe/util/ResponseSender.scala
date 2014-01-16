@@ -34,7 +34,7 @@ import net.liftweb.util._
 import scala.actors._
 
 import com.rabbitmq.client.{ConnectionFactory,Channel}
-import com.tesobe.model.{Response, BankDetails, CreateBankAccount}
+import com.tesobe.model.{Response, CreateBankAccount}
 
 // Sends message to response queue, if creating/ updating/ deleting account was successful.
 

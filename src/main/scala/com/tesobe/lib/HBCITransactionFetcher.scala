@@ -30,14 +30,14 @@ Berlin 13359, Germany
 package com.tesobe.lib
 
 import java.text.SimpleDateFormat
-import net.liftweb.common.{Box, Full, Failure}
+import net.liftweb.common.{Box, Full, Failure, Loggable}
 import scala.collection.JavaConverters._
 
 import com.tesobe.model._
 import com.tesobe.util.HBCIConnector
 import org.kapott.hbci.manager.HBCIUtils
 
-object HBCITransactionFetcher {
+object HBCITransactionFetcher with Loggable{
 
   def getTransactions(account: AccountConfig): Seq[OBPTransaction] = {
     val bankingData = HBCIConnector.getBankingData(account.bank_national_identifier, account.account_number, account.pin)
@@ -61,6 +61,7 @@ object HBCITransactionFetcher {
         )
 
         val myAccountNumber = replaceIfEmpty(bd.account.number, account.account_number)
+
         val myAccount = OBPAccount(
           holder = bd.account.holder,
           number = myAccountNumber,
@@ -95,12 +96,10 @@ object HBCITransactionFetcher {
             )
 
             val country = otherAcc.map(acc => acc.name).getOrElse("")
-            val formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
-
             val details = OBPDetails(
               kind = Option(l.text).getOrElse(""),
-              posted = OBPDate(formatter.format(l.bdate)),
-              completed = OBPDate(formatter.format(l.bdate)),
+              posted = OBPDate(l.bdate),
+              completed = OBPDate(l.bdate),
               new_balance = OBPAmount(l.saldo.value.getCurr, l.saldo.value.getDoubleValue.toString),
               value = OBPAmount(l.value.getCurr, l.value.getDoubleValue.toString),
               label = l.usage.asScala.mkString ("/"),
@@ -115,7 +114,11 @@ object HBCITransactionFetcher {
           }
         }
       }
-      case _ => Nil
+      case _ => {
+        logger.warn("could not fetch hbci transactions for account " + account.account_number +" at " + account.bank_national_identifier)
+        //TODO: store in DB for which banks HBCI worked and not
+        Nil
+      }
     }
   }
 }

@@ -72,16 +72,26 @@ object BankAccountAMQPListener {
     }
   }
 
-  def saveBankAccount (account: AddBankAccountCredentials) : Boolean = {
-    val newAccount: BankAccountDetails = BankAccountDetails.create
-    newAccount.accountNumber(account.accountNumber)
-    newAccount.bankNationalIdentifier(account.bankNationalIdentifier)
-    newAccount.pinCode(account.pinCode)
-    val saved = !tryo(newAccount.save).isEmpty
-    //TODO: After saving the account send a message the API to create
-    //an account in the database, and grant the user an owner view
+  def saveBankAccount (account: AddBankAccountCredentials)= {
+
+    //Send a message to the API only if the account was created
+    val respond =
+      BankAccountDetails.find(
+        By(BankAccountDetails.accountNumber, account.accountNumber),
+        By(BankAccountDetails.bankNationalIdentifier, account.bankNationalIdentifier),
+      ) match {
+        case Full(b) => true
+        case _ => {
+          val newAccount = BankAccountDetails.create
+          newAccount.accountNumber(account.accountNumber)
+          newAccount.bankNationalIdentifier(account.bankNationalIdentifier)
+          newAccount.pinCode(account.pinCode)
+          !tryo(newAccount.save).isEmpty
+        }
+      }
+
     //on the account
-    if (saved){
+    if (respond){
       ResponseSender.sendMessageForWebApp(SuccessResponse(account.id,"account saved"))
       ResponseSender.sendMessageForAPI(
         CreateBankAccount(
@@ -89,14 +99,12 @@ object BankAccountAMQPListener {
           account.accountOwnerProvider,
           account.accountNumber,
           account.bankNationalIdentifier,
-          HBCIUtils.getNameForBLZ(account.bankNationalIdentifier)
+          account.bankName
         )
       )
     }
     else
-      ResponseSender.sendMessageForWebApp(ErrorResponse(account.id,"account already exists"))
-    saved
-
+      ResponseSender.sendMessageForWebApp(ErrorResponse(account.id,"could not save the account"))
   }
 
   def updateBankAccount (account: UpdateBankAccountCredentials) : Boolean = {
