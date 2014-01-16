@@ -203,7 +203,6 @@ object HBCIConnector extends Loggable {
     else{
       settings += ((HBCICallback.NEED_HOST, hbciURL))
       bankingData
-      //TODO: add login if something is wrong
     }
   }
 }
