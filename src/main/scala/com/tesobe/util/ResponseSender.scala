@@ -32,13 +32,13 @@ package com.tesobe.util
 import net.liftmodules.amqp.{AMQPSender,StringAMQPSender,AMQPMessage}
 import net.liftweb.util._
 import scala.actors._
-
 import com.rabbitmq.client.{ConnectionFactory,Channel}
+import net.liftweb.common.Loggable
 import com.tesobe.model.{Response, CreateBankAccount}
 
 // Sends message to response queue, if creating/ updating/ deleting account was successful.
 
-object ResponseSender {
+object ResponseSender extends Loggable{
   val factory = new ConnectionFactory {
     import ConnectionFactory._
 
@@ -49,15 +49,17 @@ object ResponseSender {
     setVirtualHost(DEFAULT_VHOST)
   }
 
-              // StringAMQPSender(ConnectionFactory, EXCHANGE, QUEUE_ROUTING_KEY)
+  // StringAMQPSender(ConnectionFactory, EXCHANGE, QUEUE_ROUTING_KEY)
   val amqp1 = new StringAMQPSender(factory, "directExchange2", "response")
   val amqp2 = new StringAMQPSender(factory, "directExchange4", "createBankAccount")
 
   def sendMessageForWebApp(response: Response) = {
-     amqp1 ! AMQPMessage(response)
+    logger.info(s"sending to web application : $response")
+    amqp1 ! AMQPMessage(response)
   }
 
   def sendMessageForAPI(response: CreateBankAccount) = {
+    logger.info(s"sending to API : $response")
      amqp2 ! AMQPMessage(response)
   }
 }

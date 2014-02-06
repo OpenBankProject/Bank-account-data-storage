@@ -37,7 +37,7 @@ import com.tesobe.model._
 import com.tesobe.util.HBCIConnector
 import org.kapott.hbci.manager.HBCIUtils
 
-object HBCITransactionFetcher with Loggable{
+object HBCITransactionFetcher extends Loggable{
 
   def getTransactions(account: AccountConfig): Seq[OBPTransaction] = {
     val bankingData = HBCIConnector.getBankingData(account.bank_national_identifier, account.account_number, account.pin)
