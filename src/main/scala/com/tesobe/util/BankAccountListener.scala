@@ -31,7 +31,7 @@ package com.tesobe.util
 
 import net.liftmodules.amqp.{AMQPAddListener,AMQPMessage, AMQPDispatcher, SerializedConsumer}
 import net.liftweb.actor._
-import net.liftweb.common.{Full,Box,Empty}
+import net.liftweb.common.{Full,Box,Empty, Loggable}
 import net.liftweb.mapper.By
 import net.liftweb.util._
 import net.liftweb.util.Helpers.tryo
@@ -52,7 +52,7 @@ class BankAccountSerializedAMQPDispatcher[T](factory: ConnectionFactory)
   }
 }
 
-object BankAccountAMQPListener {
+object BankAccountAMQPListener extends Loggable{
   lazy val factory = new ConnectionFactory {
     import ConnectionFactory._
     setHost(Props.get("connection.host","localhost"))
@@ -73,15 +73,19 @@ object BankAccountAMQPListener {
   }
 
   def saveBankAccount (account: AddBankAccountCredentials)= {
-
+    logger.info(s"received message: $account")
     //Send a message to the API only if the account was created
     val respond =
       BankAccountDetails.find(
         By(BankAccountDetails.accountNumber, account.accountNumber),
-        By(BankAccountDetails.bankNationalIdentifier, account.bankNationalIdentifier),
+        By(BankAccountDetails.bankNationalIdentifier, account.bankNationalIdentifier)
       ) match {
-        case Full(b) => true
+        case Full(b) => {
+          logger.info(s"account ${account.accountNumber} / ${account.bankNationalIdentifier} credentials found")
+          true
+        }
         case _ => {
+          logger.info("creating Bank Account Details")
           val newAccount = BankAccountDetails.create
           newAccount.accountNumber(account.accountNumber)
           newAccount.bankNationalIdentifier(account.bankNationalIdentifier)
