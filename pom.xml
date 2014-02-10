@@ -39,6 +39,11 @@
 			<name>Scala-Tools Dependencies Repository for Snapshots</name>
 			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
 		</repository>
+    <repository>
+        <id>project.local</id>
+        <name>project</name>
+        <url>file:${project.basedir}/repo</url>
+    </repository>
 	</repositories>
 
 	<pluginRepositories>
@@ -139,12 +144,10 @@
 			<artifactId>bcpg-jdk15on</artifactId>
 			<version>1.47</version>
 		</dependency>
-    <dependency>
+		<dependency>
 			<groupId>org.kapott.hbci4java</groupId>
 			<artifactId>hbci4java-java</artifactId>
 			<version>2.5.12</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/src/main/resources/hbci4java.jar</systemPath>
 		</dependency>
 	</dependencies>
 
