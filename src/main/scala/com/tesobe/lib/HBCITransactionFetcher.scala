@@ -39,6 +39,7 @@ import org.kapott.hbci.manager.HBCIUtils
 
 object HBCITransactionFetcher extends Loggable{
 
+
   def getTransactions(account: AccountConfig): Seq[OBPTransaction] = {
     val bankingData = HBCIConnector.getBankingData(account.bank_national_identifier, account.account_number, account.pin)
     bankingData match {
@@ -51,20 +52,18 @@ object HBCITransactionFetcher extends Loggable{
             valueTotest
 
         val myBankBIC = replaceIfEmpty(bd.account.bank.bic, HBCIUtils.getBICForBLZ(account.bank_national_identifier))
-        val myBankNationalID = replaceIfEmpty(bd.account.bank.national_identifier, account.bank_national_identifier)
         val myBankName = replaceIfEmpty(bd.account.bank.name, HBCIUtils.getNameForBLZ(account.bank_national_identifier))
 
         val myBank = OBPBank(
           bic = myBankBIC,
-          national_identifier = myBankNationalID,
+          national_identifier = account.bank_national_identifier,
           name = myBankName
         )
 
-        val myAccountNumber = replaceIfEmpty(bd.account.number, account.account_number)
 
         val myAccount = OBPAccount(
           holder = bd.account.holder,
-          number = myAccountNumber,
+          number = account.account_number,
           iban = bd.account.iban,
           kind = bd.account.kind,
           bank = myBank
@@ -113,6 +112,13 @@ object HBCITransactionFetcher extends Loggable{
             )
           }
         }
+      }
+      case Failure(msg, exception, _) => {
+        logger.warn("could not fetch hbci transactions for account " + account.account_number +" at " + account.bank_national_identifier)
+        exception.map{e =>
+          logger.warn(e.toString)
+        }
+        Nil
       }
       case _ => {
         logger.warn("could not fetch hbci transactions for account " + account.account_number +" at " + account.bank_national_identifier)

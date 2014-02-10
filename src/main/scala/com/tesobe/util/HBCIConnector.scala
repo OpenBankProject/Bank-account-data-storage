@@ -36,6 +36,7 @@ import net.liftweb.util.Helpers.{tryo, randomString}
 import scala.collection.immutable.List
 import scala.collection.JavaConverters._
 import scala.collection.mutable.Map
+import net.liftweb.util.Props
 
 import org.kapott.hbci.callback.HBCICallback
 import org.kapott.hbci.callback.HBCICallbackConsole
@@ -95,7 +96,8 @@ object HBCIConnector extends Loggable {
     def bankingData: Box[BankingData] =  tryo{
 
       // Create a random file for storing bank account credentials necessary for HBCI.
-      val filepath = "passport_pintan_"+randomString(5)+".dat"
+      val filepath = Props.get("pinFilesDirectory").getOrElse("") + "passport_pintan_"+randomString(5)+".dat"
+
       //the maximum level of logging
       val loglevel = "5"
 
