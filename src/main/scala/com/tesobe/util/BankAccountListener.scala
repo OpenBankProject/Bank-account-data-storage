@@ -40,7 +40,6 @@ import scala.actors._
 
 import com.rabbitmq.client.{ConnectionFactory,Channel}
 import com.tesobe.model._
-// Listens to management queue to create, update or delete accounts in the database.
 
 class BankAccountSerializedAMQPDispatcher[T](factory: ConnectionFactory)
     extends AMQPDispatcher[T](factory) {
@@ -67,15 +66,13 @@ object BankAccountAMQPListener extends Loggable{
   val bankAccountListener = new LiftActor {
     protected def messageHandler = {
       case msg@AMQPMessage(contents: AddBankAccountCredentials) => saveBankAccount(contents)
-      case msg@AMQPMessage(contents: UpdateBankAccountCredentials) => updateBankAccount(contents)
-      case msg@AMQPMessage(contents: DeleteBankAccountCredentials) => deleteBankAccount(contents)
     }
   }
 
   def saveBankAccount (account: AddBankAccountCredentials)= {
     logger.info(s"received message: $account")
     //Send a message to the API only if the account was created
-    val respond =
+    val accountExistsOrCreated =
       BankAccountDetails.find(
         By(BankAccountDetails.accountNumber, account.accountNumber),
         By(BankAccountDetails.bankNationalIdentifier, account.bankNationalIdentifier)
@@ -90,12 +87,11 @@ object BankAccountAMQPListener extends Loggable{
           newAccount.accountNumber(account.accountNumber)
           newAccount.bankNationalIdentifier(account.bankNationalIdentifier)
           newAccount.pinCode(account.pinCode)
-          !tryo(newAccount.save).isEmpty
+          tryo(newAccount.save).isDefined
         }
       }
 
-    //on the account
-    if (respond){
+    if (accountExistsOrCreated){
       ResponseSender.sendMessageForWebApp(SuccessResponse(account.id,"account saved"))
       ResponseSender.sendMessageForAPI(
         CreateBankAccount(
@@ -111,42 +107,8 @@ object BankAccountAMQPListener extends Loggable{
       ResponseSender.sendMessageForWebApp(ErrorResponse(account.id,"could not save the account"))
   }
 
-  def updateBankAccount (account: UpdateBankAccountCredentials) : Boolean = {
-    BankAccountDetails.find(By(BankAccountDetails.accountNumber, account.accountNumber), By(BankAccountDetails.bankNationalIdentifier, account.bankNationalIdentifier)) match {
-      case Full(existingAccount) => {
-        existingAccount.pinCode(account.pinCode)
-        val updated = !tryo(existingAccount.save).isEmpty
-        if (updated)
-          ResponseSender.sendMessageForWebApp(SuccessResponse(account.id,"account updated"))
-        else
-          ResponseSender.sendMessageForWebApp(ErrorResponse(account.id,"account not updated"))
-        updated
-      }
-      case _ => {
-        ResponseSender.sendMessageForWebApp(ErrorResponse(account.id,"account does not exist"))
-        false
-      }
-    }
-  }
-
-  def deleteBankAccount (account: DeleteBankAccountCredentials) : Boolean = {
-    BankAccountDetails.find(By(BankAccountDetails.accountNumber, account.accountNumber), By(BankAccountDetails.bankNationalIdentifier, account.bankNationalIdentifier)) match {
-      case Full(existingAccount) => {
-        var deleted = !tryo(existingAccount.delete_!).isEmpty
-        if (deleted)
-          ResponseSender.sendMessageForWebApp(SuccessResponse(account.id,"account deleted"))
-        else
-          ResponseSender.sendMessageForWebApp(ErrorResponse(account.id,"account not deleted"))
-        deleted
-      }
-      case _ => {
-        ResponseSender.sendMessageForWebApp(ErrorResponse(account.id,"account does not exist"))
-        false
-      }
-    }
-  }
-
   def startListen = {
+    logger.info("listening of add bank account details messages")
     amqp ! AMQPAddListener(bankAccountListener)
   }
 }
