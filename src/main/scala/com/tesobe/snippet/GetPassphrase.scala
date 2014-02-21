@@ -31,14 +31,16 @@ package com.tesobe.snippet
 
 import net.liftweb.http._
 import net.liftweb.util.Helpers._
+import net.liftweb.common.Loggable
 import com.tesobe.util.TransactionAccountUpdateAMQPListener
 
 // Get passphrase from index.html to decrypt encrypted data.
-class GetPassphrase {
+class GetPassphrase extends Loggable{
   def render = {
     if (TransactionAccountUpdateAMQPListener.decyrptionPassphrase == "") {
       "type=text" #> SHtml.password("", TransactionAccountUpdateAMQPListener.decyrptionPassphrase = _) &
         "type=submit" #> SHtml.submit("Enter", () => {
+          logger.info("passphrase set.")
           TransactionAccountUpdateAMQPListener.startListen
           S.notice("Passphrase for decrypting sent.")
         })
