@@ -34,7 +34,6 @@ import net.liftweb.common.{Box, Full, Failure, Loggable}
 import scala.collection.JavaConverters._
 
 import com.tesobe.model._
-import com.tesobe.util.HBCIConnector
 import org.kapott.hbci.manager.HBCIUtils
 
 object HBCITransactionFetcher extends Loggable{

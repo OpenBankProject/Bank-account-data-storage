@@ -27,7 +27,7 @@ Berlin 13359, Germany
   Nina Gänsdorfer: nina AT tesobe DOT com
 
  */
-package com.tesobe.util
+package com.tesobe.messageQueue
 
 import net.liftmodules.amqp.{AMQPAddListener,AMQPMessage, AMQPDispatcher, SerializedConsumer}
 import net.liftweb.actor._

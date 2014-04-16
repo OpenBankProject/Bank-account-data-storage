@@ -41,7 +41,7 @@ import net.liftweb.util._
 import net.liftweb.util.Helpers._
 
 import com.tesobe.model.BankAccountDetails
-import com.tesobe.util.BankAccountAMQPListener
+import com.tesobe.messageQueue.BankAccountAMQPListener
 
 /**
  * A class that's instantiated early and run.  It allows the application
