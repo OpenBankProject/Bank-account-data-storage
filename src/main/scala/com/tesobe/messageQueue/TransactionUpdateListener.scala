@@ -27,7 +27,7 @@ Berlin 13359, Germany
   Nina Gänsdorfer: nina AT tesobe DOT com
 
  */
-package com.tesobe.util
+package com.tesobe.messageQueue
 
 import dispatch._
 import java.io.{File, FileInputStream}
@@ -45,6 +45,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import com.rabbitmq.client.{ConnectionFactory,Channel}
 import com.tesobe.lib.HBCITransactionFetcher
 import com.tesobe.model.{UpdateBankAccount, BankAccountDetails, AccountConfig, OBPTransactionWrapper}
+import com.tesobe.util.CryptoHandler
 
 
 // an AMQP dispatcher that waits for message coming from a specif queue

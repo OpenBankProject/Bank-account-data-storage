@@ -27,7 +27,7 @@ Berlin 13359, Germany
   Nina Gänsdorfer: nina AT tesobe DOT com
 
  */
-package com.tesobe.util;
+package com.tesobe.lib
 
 import java.io.File
 import java.util.Properties

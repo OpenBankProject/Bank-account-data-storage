@@ -32,7 +32,7 @@ package com.tesobe.snippet
 import net.liftweb.http._
 import net.liftweb.util.Helpers._
 import net.liftweb.common.Loggable
-import com.tesobe.util.TransactionAccountUpdateAMQPListener
+import com.tesobe.messageQueue.TransactionAccountUpdateAMQPListener
 
 // Get passphrase from index.html to decrypt encrypted data.
 class GetPassphrase extends Loggable{
