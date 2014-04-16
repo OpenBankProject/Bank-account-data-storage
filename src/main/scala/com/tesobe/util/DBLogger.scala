@@ -27,31 +27,24 @@ Berlin 13359, Germany
   Nina Gänsdorfer: nina AT tesobe DOT com
 
  */
-package com.tesobe.model
 
-import net.liftweb.mapper._
+package com.tesobe.util
 
-class BankAccountDetails extends LongKeyedMapper[BankAccountDetails] {
-  def getSingleton = BankAccountDetails
+import net.liftweb.actor.LiftActor
 
-  def primaryKeyField = id
-  object id extends MappedLongIndex(this)
-  object accountNumber extends MappedString(this, 32)
-  object bankNationalIdentifier extends MappedString(this, 32)
-  object pinCode extends MappedString(this, 1024)
+object DBLogger extends LiftActor{
+  import com.tesobe.lib.{BankingData, FetchingTransactionsResult}
+  import net.liftweb.common.{Box, Full}
+
+  def messageHandler = {
+
+    case FetchingTransactionsResult(bankId, status) => {
+      import com.tesobe.model.BankLog
+        BankLog
+        .create
+        .nationalIdentifier(bankId)
+        .transactionsFetched(status)
+        .save
+    }
+  }
 }
-
-object BankAccountDetails extends BankAccountDetails with LongKeyedMetaMapper[BankAccountDetails]{
-  override def dbIndexes = UniqueIndex(accountNumber, bankNationalIdentifier) ::super.dbIndexes
-}
-
-class BankLog extends LongKeyedMapper[BankLog] with CreatedTrait{
-  def getSingleton = BankLog
-
-  def primaryKeyField = id
-  object id extends MappedLongIndex(this)
-  object nationalIdentifier extends MappedString(this, 32)
-  object transactionsFetched extends MappedBoolean(this)
-}
-
-object BankLog extends BankLog with LongKeyedMetaMapper[BankLog]

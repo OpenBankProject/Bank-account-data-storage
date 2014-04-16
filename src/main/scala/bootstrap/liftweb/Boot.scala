@@ -40,7 +40,7 @@ import net.liftweb.mapper._
 import net.liftweb.util._
 import net.liftweb.util.Helpers._
 
-import com.tesobe.model.BankAccountDetails
+import com.tesobe.model.{BankAccountDetails, BankLog}
 import com.tesobe.messageQueue.BankAccountAMQPListener
 
 /**
@@ -146,7 +146,7 @@ class Boot extends Loggable{
 
     // where to search snippet
     LiftRules.addToPackages("com.tesobe")
-    Schemifier.schemify(true, Schemifier.infoF _, BankAccountDetails)
+    Schemifier.schemify(true, Schemifier.infoF _, BankAccountDetails, BankLog)
 
     // check that we have the private key for decryption
     Props.get("importer.keyfile") getOrElse {
@@ -155,5 +155,6 @@ class Boot extends Loggable{
     }
 
     BankAccountAMQPListener.startListen
+
   }
 }

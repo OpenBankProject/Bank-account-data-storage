@@ -49,6 +49,7 @@ import org.kapott.hbci.passport.AbstractHBCIPassport
 import org.kapott.hbci.passport.HBCIPassport
 import org.kapott.hbci.status.HBCIExecStatus
 import com.tesobe.model.{OBPAccount,OBPBank}
+import com.tesobe.util.DBLogger
 
 
 case class BankingData(
@@ -56,6 +57,11 @@ case class BankingData(
   val umlsLines : List[UmsLine] //the transactions of the account
 )
 
+//
+case class FetchingTransactionsResult(
+  bankNationalIdentifier: String,
+  isSuccess : Boolean
+)
 object HBCIConnector extends Loggable {
   def getBankingData(blz: String, accountNumber: String, pin: String): Box[BankingData] = {
     val passphrase = randomString(5)
@@ -153,7 +159,7 @@ object HBCIConnector extends Loggable {
       job.addToQueue();
 
       val ret: HBCIExecStatus = hbciHandle.execute();
-      val result: List[UmsLine] = job.getJobResult() match {
+      val transactions: List[UmsLine] = job.getJobResult() match {
         case x: GVRKUms => x.getFlatData().asScala.toList
         case _ => Nil
       }
@@ -177,7 +183,6 @@ object HBCIConnector extends Loggable {
         kind  = fullStringOrEmpty(thisAccount.`type`),
         bank = myBank
       )
-      val transactions = result
       val bd = BankingData(
         myAccount,
         transactions
@@ -191,21 +196,27 @@ object HBCIConnector extends Loggable {
       // Delete file with credentials.
       tryo {
         new File(filepath)
-        }.map {
+      }.map {
           f => {
             if (!f.delete)
-              logger.error("could not delete file "+filepath)
+              logger.error(s"could not delete file $filepath")
           }
         }
       bd
     }
 
-    if (hbciURL.isEmpty)
-      Failure ("no HBCI URL available for BLZ "+blz)
-    else{
-      settings += ((HBCICallback.NEED_HOST, hbciURL))
-      bankingData
-    }
+    val result: Box[BankingData] =
+      if (hbciURL.nonEmpty){
+        settings += ((HBCICallback.NEED_HOST, hbciURL))
+        bankingData
+      }
+      else{
+        Failure (s"no HBCI URL available for BLZ $blz. Cannot fetch transactions")
+      }
+
+    DBLogger ! FetchingTransactionsResult (blz, result.isDefined)
+
+    result
   }
 }
 

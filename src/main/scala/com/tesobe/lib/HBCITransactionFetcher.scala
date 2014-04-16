@@ -113,15 +113,14 @@ object HBCITransactionFetcher extends Loggable{
         }
       }
       case Failure(msg, exception, _) => {
-        logger.warn("could not fetch hbci transactions for account " + account.account_number +" at " + account.bank_national_identifier)
+        logger.warn(s"could not fetch hbci transactions for account ${account.account_number} at ${account.bank_national_identifier}")
         exception.map{e =>
           logger.warn(e.toString)
         }
         Nil
       }
       case _ => {
-        logger.warn("could not fetch hbci transactions for account " + account.account_number +" at " + account.bank_national_identifier)
-        //TODO: store in DB for which banks HBCI worked and not
+        logger.warn(s"could not fetch hbci transactions for account ${account.account_number} at ${account.bank_national_identifier}")
         Nil
       }
     }
