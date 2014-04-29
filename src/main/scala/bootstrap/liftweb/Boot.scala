@@ -41,7 +41,7 @@ import net.liftweb.util._
 import net.liftweb.util.Helpers._
 
 import com.tesobe.model.{BankAccountDetails, BankLog}
-import com.tesobe.messageQueue.BankAccountAMQPListener
+import com.tesobe.messageQueue.{BankAccountAMQPListener, BanksStatuesListener}
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -155,6 +155,6 @@ class Boot extends Loggable{
     }
 
     BankAccountAMQPListener.startListen
-
+    BanksStatuesListener.startListen
   }
 }

@@ -27,41 +27,58 @@ Berlin 13359, Germany
   Nina Gänsdorfer: nina AT tesobe DOT com
 
  */
-package com.tesobe.model
+package com.tesobe.model{
 
-trait BankAccount{}
+  trait BankAccount{}
 
-case class AddBankAccountCredentials(
-  id: String,
-  accountNumber : String,
-  bankNationalIdentifier : String,
-  bankName: String,
-  pinCode : String,
-  accountOwnerId: String,
-  accountOwnerProvider: String
-) extends BankAccount
+  case class AddBankAccountCredentials(
+    id: String,
+    accountNumber : String,
+    bankNationalIdentifier : String,
+    bankName: String,
+    pinCode : String,
+    accountOwnerId: String,
+    accountOwnerProvider: String
+  ) extends BankAccount
 
-case class UpdateBankAccountCredentials(id: String, accountNumber : String, bankNationalIdentifier : String, pinCode : String) extends BankAccount
-case class DeleteBankAccountCredentials(id: String, accountNumber : String, bankNationalIdentifier : String) extends BankAccount
+  case class UpdateBankAccountCredentials(id: String, accountNumber : String, bankNationalIdentifier : String, pinCode : String) extends BankAccount
+  case class DeleteBankAccountCredentials(id: String, accountNumber : String, bankNationalIdentifier : String) extends BankAccount
 
-trait Response{
-  val id: String
-  val message: String
+  trait Response{
+    val id: String
+    val message: String
+  }
+
+  case class SuccessResponse(id: String, message: String) extends Response
+  case class ErrorResponse(id: String, message: String) extends Response
+
+  case class CreateBankAccount(
+    accountOwnerId: String,
+    accountOwnerProvider: String,
+    accountNumber: String,
+    bankIdentifier: String,
+    bankName: String
+  )
+
+  case class UpdateBankAccount(
+    accountNumber : String,
+    bankNationalIdentifier : String
+  )
 }
 
-case class SuccessResponse(id: String, message: String) extends Response
-case class ErrorResponse(id: String, message: String) extends Response
+package com.tesobe.status.model{
 
-case class CreateBankAccount(
-  accountOwnerId: String,
-  accountOwnerProvider: String,
-  accountNumber: String,
-  bankIdentifier: String,
-  bankName: String
-)
+  import java.util.Date
 
+  case class GetBanksStatues
+  case class BankStatus(
+    country: String,
+    id: String,
+    status: Boolean,
+    lastUpdate: Date
+  )
 
-case class UpdateBankAccount(
-  accountNumber : String,
-  bankNationalIdentifier : String
-)
+  case class BanksStatuesReply(
+    statues: Set[BankStatus]
+  )
+}
