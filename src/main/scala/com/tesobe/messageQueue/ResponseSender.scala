@@ -36,8 +36,8 @@ import com.rabbitmq.client.{ConnectionFactory,Channel}
 import net.liftweb.common.Loggable
 import com.tesobe.model.{Response, CreateBankAccount}
 
-// Sends message to response queue, if creating/ updating/ deleting account was successful.
 
+// allows the application to write messages in the message queue
 object ResponseSender extends Loggable{
   val factory = new ConnectionFactory {
     import ConnectionFactory._
@@ -52,6 +52,8 @@ object ResponseSender extends Loggable{
   // StringAMQPSender(ConnectionFactory, EXCHANGE, QUEUE_ROUTING_KEY)
   val amqp1 = new StringAMQPSender(factory, "directExchange2", "response")
   val amqp2 = new StringAMQPSender(factory, "directExchange4", "createBankAccount")
+  val amqp3 = new StringAMQPSender(factory, "bankStatuesResponse", "bankStatues")
+
 
   def sendMessageForWebApp(response: Response) = {
     logger.info(s"sending to web application : $response")
@@ -61,5 +63,11 @@ object ResponseSender extends Loggable{
   def sendMessageForAPI(response: CreateBankAccount) = {
     logger.info(s"sending to API : $response")
      amqp2 ! AMQPMessage(response)
+  }
+
+  import com.tesobe.status.model.BanksStatuesReply
+  def sendStatues(statues: BanksStatuesReply) = {
+    logger.info(s"sending to status application: $statues")
+    amqp3 ! AMQPMessage(statues)
   }
 }
