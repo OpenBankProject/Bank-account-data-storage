@@ -80,5 +80,9 @@ package com.tesobe.status.model{
 
   case class BanksStatuesReply(
     statues: Set[BankStatus]
-  )
+  ){
+    def find(country: String, id: String): Option[BankStatus]= {
+      statues.find(s => {s.country == country && s.id == id})
+    }
+  }
 }
