@@ -154,6 +154,23 @@ class Boot extends Loggable{
       "key.gpg"
     }
 
+    //Show the spinny image when an Ajax call starts
+    LiftRules.ajaxStart =
+      Full(() => LiftRules.jsArtifacts.show("ajax-loader").cmd)
+
+    // Make the spinny image go away when it ends
+    LiftRules.ajaxEnd =
+      Full(() => LiftRules.jsArtifacts.hide("ajax-loader").cmd)
+
+    // Force the request to be UTF-8
+    LiftRules.early.append(_.setCharacterEncoding("UTF-8"))
+
+    // Use HTML5 for rendering
+    LiftRules.htmlProperties.default.set((r: Req) =>
+      new Html5Properties(r.userAgent))
+
+    LiftRules.explicitlyParsedSuffixes = Helpers.knownSuffixes &~ (Set("com"))
+
     BankAccountAMQPListener.startListen
     BanksStatuesListener.startListen
   }

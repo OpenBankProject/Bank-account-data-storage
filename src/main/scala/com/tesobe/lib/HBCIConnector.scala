@@ -159,9 +159,17 @@ object HBCIConnector extends Loggable {
       job.addToQueue();
 
       val ret: HBCIExecStatus = hbciHandle.execute();
+      // TODO: look at the job status first and make the transactions a box
       val transactions: List[UmsLine] = job.getJobResult() match {
-        case x: GVRKUms => x.getFlatData().asScala.toList
-        case _ => Nil
+        case x: GVRKUms => {
+          val t = x.getFlatData().asScala.toList
+          logger.info(s"fetched ${t.size} transactions")
+          t
+        }
+        case _ => {
+          logger.error("failed to get transactions")
+          Nil
+        }
       }
 
       val thisAccount = passport.getAccount(accountNumber)
@@ -189,10 +197,17 @@ object HBCIConnector extends Loggable {
       )
 
       if (hbciHandle!=null) {
+        logger.info("closing hbci handel")
         hbciHandle.close();
-      } else if (passport!=null) {
+      }
+
+      if (passport!=null) {
+        logger.info("closing passport")
         passport.close();
       }
+
+      HBCIUtils.done()
+
       // Delete file with credentials.
       tryo {
         new File(filepath)
