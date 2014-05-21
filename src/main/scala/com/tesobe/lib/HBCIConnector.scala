@@ -226,7 +226,9 @@ object HBCIConnector extends Loggable {
         bankingData
       }
       else{
-        Failure (s"no HBCI URL available for BLZ $blz. Cannot fetch transactions")
+        val errorMessage = s"no HBCI URL available for BLZ $blz. Cannot fetch transactions"
+        logger.error(errorMessage)
+        Failure(errorMessage)
       }
 
     DBLogger ! FetchingTransactionsResult (blz, result.isDefined)
