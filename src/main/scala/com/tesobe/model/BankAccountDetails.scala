@@ -31,7 +31,7 @@ package com.tesobe.model
 
 import net.liftweb.mapper._
 
-class BankAccountDetails extends LongKeyedMapper[BankAccountDetails] {
+class BankAccountDetails extends LongKeyedMapper[BankAccountDetails] with CreatedUpdated{
   def getSingleton = BankAccountDetails
 
   def primaryKeyField = id

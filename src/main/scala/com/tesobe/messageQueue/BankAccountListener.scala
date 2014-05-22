@@ -78,8 +78,9 @@ object BankAccountAMQPListener extends Loggable{
         By(BankAccountDetails.bankNationalIdentifier, account.bankNationalIdentifier)
       ) match {
         case Full(b) => {
-          logger.info(s"account ${account.accountNumber} / ${account.bankNationalIdentifier} credentials found")
-          true
+          logger.info(s"account ${account.accountNumber} / ${account.bankNationalIdentifier} credentials found. Updating the pincode")
+          b.pinCode(account.pinCode)
+          tryo(b.save).isDefined
         }
         case _ => {
           logger.info("creating Bank Account Details")
