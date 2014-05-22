@@ -173,5 +173,6 @@ class Boot extends Loggable{
 
     BankAccountAMQPListener.startListen
     BanksStatuesListener.startListen
+
   }
 }
