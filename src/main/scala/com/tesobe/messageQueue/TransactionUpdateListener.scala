@@ -30,15 +30,12 @@ Berlin 13359, Germany
 package com.tesobe.messageQueue
 
 import dispatch._
-import java.io.{File, FileInputStream}
 import net.liftmodules.amqp.{AMQPAddListener,AMQPMessage, AMQPDispatcher, SerializedConsumer}
 import net.liftweb.actor._
-import net.liftweb.common.{Full, Box, Empty, Loggable, Failure}
+import net.liftweb.common.{Full, Box, Loggable, Failure}
 import net.liftweb.json._
 import net.liftweb.mapper.By
 import net.liftweb.util._
-import net.liftweb.util.Helpers.tryo
-import scala.actors._
 import scala.concurrent
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -46,6 +43,8 @@ import com.rabbitmq.client.{ConnectionFactory,Channel}
 import com.tesobe.lib.HBCITransactionFetcher
 import com.tesobe.model.{UpdateBankAccount, BankAccountDetails, AccountConfig, OBPTransactionWrapper}
 import com.tesobe.util.CryptoHandler
+import com.tesobe.util.RabbitMQConnection
+
 
 
 // an AMQP dispatcher that waits for message coming from a specif queue
@@ -65,16 +64,7 @@ object TransactionAccountUpdateAMQPListener extends Loggable with CryptoHandler{
 
   var decyrptionPassphrase = ""
 
-  lazy val factory = new ConnectionFactory {
-    import ConnectionFactory._
-    setHost(Props.get("connection.host", "localhost"))
-    setPort(DEFAULT_AMQP_PORT)
-    setUsername(Props.get("connection.user", DEFAULT_USER))
-    setPassword(Props.get("connection.password", DEFAULT_PASS))
-    setVirtualHost(DEFAULT_VHOST)
-  }
-
-  val amqp = new TransactionAccountUpdateAMQPDispatcher[UpdateBankAccount](factory)
+  val amqp = new TransactionAccountUpdateAMQPDispatcher[UpdateBankAccount](RabbitMQConnection.connectionFactory)
 
   val transactionAccountUpdateListener = new LiftActor {
     protected def messageHandler = {

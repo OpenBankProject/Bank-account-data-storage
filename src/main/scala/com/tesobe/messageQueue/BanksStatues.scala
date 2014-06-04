@@ -31,15 +31,12 @@ package com.tesobe.messageQueue
 
 import net.liftmodules.amqp.{AMQPAddListener,AMQPMessage, AMQPDispatcher, SerializedConsumer}
 import net.liftweb.actor._
-import net.liftweb.common.{Full,Box,Empty, Loggable}
-import net.liftweb.mapper.By
+import net.liftweb.common.Loggable
 import net.liftweb.util._
-import net.liftweb.util.Helpers.tryo
-import org.kapott.hbci.manager.HBCIUtils
-import scala.actors._
-
 import com.rabbitmq.client.{ConnectionFactory,Channel}
+
 import com.tesobe.model._
+import com.tesobe.util.RabbitMQConnection
 
 class BanksStatuesAMQPDispatcher[T](factory: ConnectionFactory)
     extends AMQPDispatcher[T](factory) {
@@ -54,16 +51,7 @@ class BanksStatuesAMQPDispatcher[T](factory: ConnectionFactory)
 object BanksStatuesListener extends Loggable{
   import com.tesobe.status.model.GetBanksStatues
 
-  lazy val factory = new ConnectionFactory {
-    import ConnectionFactory._
-    setHost(Props.get("connection.host","localhost"))
-    setPort(DEFAULT_AMQP_PORT)
-    setUsername(Props.get("connection.user", DEFAULT_USER))
-    setPassword(Props.get("connection.password", DEFAULT_PASS))
-    setVirtualHost(DEFAULT_VHOST)
-  }
-
-  val amqp = new BanksStatuesAMQPDispatcher[GetBanksStatues](factory)
+  val amqp = new BanksStatuesAMQPDispatcher[GetBanksStatues](RabbitMQConnection.connectionFactory)
 
   val banksStatuesListener = new LiftActor {
 
