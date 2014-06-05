@@ -37,6 +37,9 @@ class BankAccountDetails extends LongKeyedMapper[BankAccountDetails] with Create
   def primaryKeyField = id
   object id extends MappedLongIndex(this)
   object accountNumber extends MappedString(this, 32)
+  object userId extends MappedString(this, 64){
+    override def defaultValue = ""
+  }
   object bankNationalIdentifier extends MappedString(this, 32)
   object pinCode extends MappedString(this, 1024)
 }

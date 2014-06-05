@@ -35,6 +35,7 @@ class BankConnectionTest{
   import net.liftweb.http.S
 
   object bankId extends RequestVar("")
+  object userId extends RequestVar("")
   object accountNumber extends RequestVar("")
   object accountPin extends RequestVar("")
 
@@ -60,7 +61,8 @@ class BankConnectionTest{
       import net.liftweb.common.Full
       import com.tesobe.lib.HBCIConnector
 
-      val result = HBCIConnector.getBankingData(bankId.get, accountNumber.get, accountPin.get)
+      val user = if(userId.get.isEmpty) None else Some(userId.get)
+      val result = HBCIConnector.getBankingData(bankId.get, accountNumber.get, user, accountPin.get)
 
       val html =
         result match {
@@ -87,6 +89,7 @@ class BankConnectionTest{
 
     "form [action]" #> {S.uri}&
     "#bankId" #> SHtml.textElem(bankId,("placeholder","123456789")) &
+    "#userId" #> SHtml.textElem(userId,("placeholder","optional")) &
     "#accountNumber" #> SHtml.textElem(accountNumber,("placeholder","123456789")) &
     "#accountPin" #> SHtml.passwordElem(accountPin,("placeholder","***********")) &
     "#processSubmit" #> SHtml.hidden(processInputs)

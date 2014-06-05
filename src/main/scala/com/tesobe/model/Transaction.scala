@@ -38,8 +38,9 @@ import java.util.Date
  * @param pinData the encrypted PIN for this account
  */
 case class AccountConfig(
-  bank_national_identifier: String,
-  account_number: String,
+  bankNationalIdentifier: String,
+  accountNumber: String,
+  userId: Option[String],
   pin: String
 )
 /**

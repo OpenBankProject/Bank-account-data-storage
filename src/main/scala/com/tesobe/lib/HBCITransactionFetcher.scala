@@ -40,7 +40,7 @@ object HBCITransactionFetcher extends Loggable{
 
 
   def getTransactions(account: AccountConfig): Seq[OBPTransaction] = {
-    val bankingData = HBCIConnector.getBankingData(account.bank_national_identifier, account.account_number, account.pin)
+    val bankingData = HBCIConnector.getBankingData(account.bankNationalIdentifier, account.accountNumber, account.userId, account.pin)
     bankingData match {
       case Full(bd) => {
 
@@ -50,19 +50,19 @@ object HBCITransactionFetcher extends Loggable{
           else
             valueTotest
 
-        val myBankBIC = replaceIfEmpty(bd.account.bank.bic, HBCIUtils.getBICForBLZ(account.bank_national_identifier))
-        val myBankName = replaceIfEmpty(bd.account.bank.name, HBCIUtils.getNameForBLZ(account.bank_national_identifier))
+        val myBankBIC = replaceIfEmpty(bd.account.bank.bic, HBCIUtils.getBICForBLZ(account.bankNationalIdentifier))
+        val myBankName = replaceIfEmpty(bd.account.bank.name, HBCIUtils.getNameForBLZ(account.bankNationalIdentifier))
 
         val myBank = OBPBank(
           bic = myBankBIC,
-          national_identifier = account.bank_national_identifier,
+          national_identifier = account.bankNationalIdentifier,
           name = myBankName
         )
 
 
         val myAccount = OBPAccount(
           holder = bd.account.holder,
-          number = account.account_number,
+          number = account.accountNumber,
           iban = bd.account.iban,
           kind = bd.account.kind,
           bank = myBank
@@ -113,14 +113,14 @@ object HBCITransactionFetcher extends Loggable{
         }
       }
       case Failure(msg, exception, _) => {
-        logger.warn(s"could not fetch hbci transactions for account ${account.account_number} at ${account.bank_national_identifier}")
+        logger.warn(s"could not fetch hbci transactions for account ${account.accountNumber} at ${account.bankNationalIdentifier}")
         exception.map{e =>
           logger.warn(e.toString)
         }
         Nil
       }
       case _ => {
-        logger.warn(s"could not fetch hbci transactions for account ${account.account_number} at ${account.bank_national_identifier}")
+        logger.warn(s"could not fetch hbci transactions for account ${account.accountNumber} at ${account.bankNationalIdentifier}")
         Nil
       }
     }
