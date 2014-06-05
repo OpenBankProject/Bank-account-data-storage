@@ -63,24 +63,24 @@ case class FetchingTransactionsResult(
   isSuccess : Boolean
 )
 object HBCIConnector extends Loggable {
-  def getBankingData(blz: String, accountNumber: String, pin: String): Box[BankingData] = {
+  def getBankingData(blz: String, accountNumber: String, userID: Option[String], pin: String): Box[BankingData] = {
     val passphrase = randomString(5)
 
     lazy val settings: Map[Int,String] = Map(
-      HBCICallback.NEED_COUNTRY -> "DE",
-      HBCICallback.NEED_BLZ -> blz,
-      HBCICallback.NEED_CUSTOMERID -> accountNumber,
-      HBCICallback.NEED_FILTER -> "Base64",
-      // The host will be added later:
-      // We need the getPinTanURLForBLZ function of HBCIUtils, but we have to wait until HBCIUtils is initiated.
-      HBCICallback.NEED_PT_PIN -> pin,
-      HBCICallback.NEED_PASSPHRASE_LOAD -> passphrase,
-      HBCICallback.NEED_PASSPHRASE_SAVE -> passphrase,
-      HBCICallback.NEED_PORT -> "443",
-      HBCICallback.NEED_USERID -> accountNumber,
-      HBCICallback.NEED_CONNECTION -> "",
-      HBCICallback.CLOSE_CONNECTION -> "",
-      HBCICallback.NEED_PT_SECMECH -> "999"
+        HBCICallback.NEED_COUNTRY -> "DE",
+        HBCICallback.NEED_BLZ -> blz,
+        HBCICallback.NEED_CUSTOMERID -> userID.getOrElse(accountNumber),
+        HBCICallback.NEED_FILTER -> "Base64",
+        // The host will be added later:
+        // We need the getPinTanURLForBLZ function of HBCIUtils, but we have to wait until HBCIUtils is initiated.
+        HBCICallback.NEED_PT_PIN -> pin,
+        HBCICallback.NEED_PASSPHRASE_LOAD -> passphrase,
+        HBCICallback.NEED_PASSPHRASE_SAVE -> passphrase,
+        HBCICallback.NEED_PORT -> "443",
+        HBCICallback.NEED_USERID -> userID.getOrElse(accountNumber),
+        HBCICallback.NEED_CONNECTION -> "",
+        HBCICallback.CLOSE_CONNECTION -> "",
+        HBCICallback.NEED_PT_SECMECH -> "999"
       )
 
     // HBCICallbackConsole requires interaction with the console. We override callback to read the data from the settings map.
@@ -99,125 +99,146 @@ object HBCIConnector extends Loggable {
     // According to the documentation of hbci4java, there should not be an https:// before the UTL for PinTan.
     val hbciURL =  HBCIUtils.getPinTanURLForBLZ(blz).stripPrefix("https://")
 
-    def bankingData: Box[BankingData] =  tryo{
+    def bankingData: Box[BankingData] = {
+      val accountAndTransactions:Box[(OBPAccount, Box[List[UmsLine]])] =
+        tryo{
 
-      // Create a random file for storing bank account credentials necessary for HBCI.
-      val filepath = Props.get("pinFilesDirectory").getOrElse("") + "passport_pintan_"+randomString(5)+".dat"
+          // Create a random file for storing bank account credentials necessary for HBCI.
+          val filepath = Props.get("pinFilesDirectory").getOrElse("") + "passport_pintan_"+randomString(5)+".dat"
 
-      //the maximum level of logging
-      val loglevel = "5"
+          //the maximum level of logging
+          val loglevel = "5"
 
-      //HBCI Kernel settings
-      HBCIUtils.setParam("client.connection.localPort",null);
-      HBCIUtils.setParam("comm.standard.socks.server",null);
-      HBCIUtils.setParam("log.loglevel.default", loglevel);
-      HBCIUtils.setParam("kernel.rewriter",HBCIUtils.getParam("kernel.rewriter"));
+          //HBCI Kernel settings
+          HBCIUtils.setParam("client.connection.localPort",null);
+          HBCIUtils.setParam("comm.standard.socks.server",null);
+          HBCIUtils.setParam("log.loglevel.default", loglevel);
+          HBCIUtils.setParam("kernel.rewriter",HBCIUtils.getParam("kernel.rewriter"));
 
-      HBCIUtils.setParam("client.passport.default","PinTan");
-      HBCIUtils.setParam("client.passport.PinTan.filename", filepath);
-      HBCIUtils.setParam("client.passport.PinTan.checkcert","0");
-      HBCIUtils.setParam("client.passport.PinTan.certfile",null);
-      HBCIUtils.setParam("client.passport.PinTan.proxy",null);
-      HBCIUtils.setParam("client.passport.PinTan.proxyuser",null);
-      HBCIUtils.setParam("client.passport.PinTan.proxypass",null);
-      HBCIUtils.setParam("client.passport.PinTan.init","1");
+          HBCIUtils.setParam("client.passport.default","PinTan");
+          HBCIUtils.setParam("client.passport.PinTan.filename", filepath);
+          HBCIUtils.setParam("client.passport.PinTan.checkcert","0");
+          HBCIUtils.setParam("client.passport.PinTan.certfile",null);
+          HBCIUtils.setParam("client.passport.PinTan.proxy",null);
+          HBCIUtils.setParam("client.passport.PinTan.proxyuser",null);
+          HBCIUtils.setParam("client.passport.PinTan.proxypass",null);
+          HBCIUtils.setParam("client.passport.PinTan.init","1");
 
-      // Get HBCI-version from passport or the BLZ-file, the default for PinTan is "plus".
-      val passport= AbstractHBCIPassport.getInstance()
-      val passportHBCIVersion: String ={
-        val hbciversion = passport.getHBCIVersion
-        if (hbciversion.isEmpty){
-          val version = HBCIUtils.getPinTanVersionForBLZ(blz)
-          if (version.isEmpty)
-            "plus"
-          else
-            version
-        }
-        else
-          hbciversion
-      }
-
-      HBCIUtils.setParam("client.passport.hbciversion.default", passportHBCIVersion);
-
-      HBCIUtils.setParam("action.resetBPD","1");
-      HBCIUtils.setParam("action.resetUPD","1");
-
-      if (HBCIUtils.getParam("action.resetBPD").equals("1")) {
-        passport.clearBPD();
-      }
-      if (HBCIUtils.getParam("action.resetUPD").equals("1")) {
-        passport.clearUPD();
-      }
-
-
-      val hbciHandle = new HBCIHandler(HBCIUtils.getParam("client.passport.hbciversion.default"),passport);
-
-      // Set which job should be executed, so in our case: get all transactions of a certain account.
-      val job: HBCIJob =  hbciHandle.newJob("KUmsAll");
-      job.setParam("my.number", accountNumber);
-      job.setParam("my.blz", blz);
-      job.addToQueue();
-
-      val ret: HBCIExecStatus = hbciHandle.execute();
-      // TODO: look at the job status first and make the transactions a box
-      val transactions: List[UmsLine] = job.getJobResult() match {
-        case x: GVRKUms => {
-          val t = x.getFlatData().asScala.toList
-          logger.info(s"fetched ${t.size} transactions")
-          t
-        }
-        case _ => {
-          logger.error("failed to get transactions")
-          Nil
-        }
-      }
-
-      val thisAccount = passport.getAccount(accountNumber)
-      def fullStringOrEmpty(s: String): String =
-        if(s == null)
-          ""
-        else
-          s
-
-      val myBank = OBPBank(
-        bic = fullStringOrEmpty(thisAccount.bic),
-        national_identifier = fullStringOrEmpty(thisAccount.blz),
-        name = fullStringOrEmpty(passport.getInstName)
-      )
-      val myAccount = OBPAccount(
-        holder = fullStringOrEmpty(thisAccount.name) + fullStringOrEmpty(thisAccount.name2),
-        number = fullStringOrEmpty(thisAccount.number),
-        iban = fullStringOrEmpty(thisAccount.iban),
-        kind  = fullStringOrEmpty(thisAccount.`type`),
-        bank = myBank
-      )
-      val bd = BankingData(
-        myAccount,
-        transactions
-      )
-
-      if (hbciHandle!=null) {
-        logger.info("closing hbci handel")
-        hbciHandle.close();
-      }
-
-      if (passport!=null) {
-        logger.info("closing passport")
-        passport.close();
-      }
-
-      HBCIUtils.done()
-
-      // Delete file with credentials.
-      tryo {
-        new File(filepath)
-      }.map {
-          f => {
-            if (!f.delete)
-              logger.error(s"could not delete file $filepath")
+          // Get HBCI-version from passport or the BLZ-file, the default for PinTan is "plus".
+          val passport= AbstractHBCIPassport.getInstance()
+          val passportHBCIVersion: String ={
+            val hbciversion = passport.getHBCIVersion
+            if (hbciversion.isEmpty){
+              val version = HBCIUtils.getPinTanVersionForBLZ(blz)
+              if (version.isEmpty)
+                "plus"
+              else
+                version
+            }
+            else
+              hbciversion
           }
+
+          HBCIUtils.setParam("client.passport.hbciversion.default", passportHBCIVersion);
+
+          HBCIUtils.setParam("action.resetBPD","1");
+          HBCIUtils.setParam("action.resetUPD","1");
+
+          if (HBCIUtils.getParam("action.resetBPD").equals("1")) {
+            passport.clearBPD();
+          }
+          if (HBCIUtils.getParam("action.resetUPD").equals("1")) {
+            passport.clearUPD();
+          }
+
+
+          val hbciHandle = new HBCIHandler(HBCIUtils.getParam("client.passport.hbciversion.default"),passport);
+
+          // Set which job should be executed, so in our case: get all transactions of a certain account.
+          val job: HBCIJob =  hbciHandle.newJob("KUmsAll");
+          job.setParam("my.number", accountNumber);
+          job.setParam("my.blz", blz);
+          job.addToQueue();
+
+          val ret: HBCIExecStatus = hbciHandle.execute();
+          val transactions: Box[List[UmsLine]] = {
+            val jobResult = job.getJobResult()
+            val status = jobResult.getJobStatus
+            if(status.isOK){
+              jobResult match {
+                case x: GVRKUms => {
+                  val t = x.getFlatData().asScala.toList
+                  logger.info(s"fetched ${t.size} transactions")
+                  Full(t)
+                }
+                case _ => {
+                  val errorMessage = "Status Ok but failed to get GVRKUms"
+                  logger.error(errorMessage)
+                  Failure(errorMessage)
+                }
+              }
+            }else{
+              val errorMessage = "error status: " + status.getErrorString
+              logger.error(errorMessage)
+              Failure(errorMessage)
+            }
+          }
+
+          val thisAccount = passport.getAccount(accountNumber)
+          def fullStringOrEmpty(s: String): String =
+            if(s == null)
+              ""
+            else
+              s
+
+          val myBank = OBPBank(
+            bic = fullStringOrEmpty(thisAccount.bic),
+            national_identifier = fullStringOrEmpty(thisAccount.blz),
+            name = fullStringOrEmpty(passport.getInstName)
+          )
+          val myAccount = OBPAccount(
+            holder = fullStringOrEmpty(thisAccount.name) + fullStringOrEmpty(thisAccount.name2),
+            number = fullStringOrEmpty(thisAccount.number),
+            iban = fullStringOrEmpty(thisAccount.iban),
+            kind  = fullStringOrEmpty(thisAccount.`type`),
+            bank = myBank
+          )
+
+
+          if (hbciHandle!=null) {
+            logger.info("closing hbci handel")
+            hbciHandle.close();
+          }
+
+          if (passport!=null) {
+            logger.info("closing passport")
+            passport.close();
+          }
+
+          HBCIUtils.done()
+
+          // Delete file with credentials.
+          tryo {
+            new File(filepath)
+          }.map {
+              f => {
+                if (!f.delete)
+                  logger.error(s"could not delete file $filepath")
+              }
+            }
+
+          (myAccount,transactions)
         }
-      bd
+
+      for{
+        (account, transactions) <- accountAndTransactions
+        t <- transactions
+      } yield {
+        BankingData(
+          account,
+          t
+        )
+      }
     }
 
     val result: Box[BankingData] =

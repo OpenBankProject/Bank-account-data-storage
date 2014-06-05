@@ -96,7 +96,8 @@ object TransactionAccountUpdateAMQPListener extends Loggable with CryptoHandler{
           implicit val formats = new net.liftweb.json.DefaultFormats {
              override def dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
            }
-          val transactions = HBCITransactionFetcher.getTransactions(AccountConfig(account.bankNationalIdentifier, account.accountNumber, pinDecrypted))
+          val userId: Option[String] = if(acc.userId.isEmpty) None else Some(acc.userId)
+          val transactions = HBCITransactionFetcher.getTransactions(AccountConfig(account.bankNationalIdentifier, account.accountNumber, userId, pinDecrypted))
           val transactionHulls = transactions.map(OBPTransactionWrapper(_))
           val json = compact(render(Extraction.decompose(transactionHulls)))
           val req =
