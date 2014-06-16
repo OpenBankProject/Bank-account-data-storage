@@ -52,7 +52,7 @@ class BankAccountSerializedAMQPDispatcher[T](factory: ConnectionFactory)
 
 object BankAccountAMQPListener extends Loggable{
 
-  val amqp = new BankAccountSerializedAMQPDispatcher[BankAccount](RabbitMQConnection.connectionFactory)
+  val amqp = new BankAccountSerializedAMQPDispatcher[AddBankAccountCredentials](RabbitMQConnection.connectionFactory)
 
   val bankAccountListener = new LiftActor {
     protected def messageHandler = {
@@ -71,14 +71,18 @@ object BankAccountAMQPListener extends Loggable{
         case Full(b) => {
           logger.info(s"account ${account.accountNumber} / ${account.bankNationalIdentifier} credentials found. Updating the pincode")
           b.pinCode(account.pinCode)
+          b.userId(account.userId.getOrElse(""))
           tryo(b.save).isDefined
         }
         case _ => {
           logger.info("creating Bank Account Details")
-          val newAccount = BankAccountDetails.create
-          newAccount.accountNumber(account.accountNumber)
-          newAccount.bankNationalIdentifier(account.bankNationalIdentifier)
-          newAccount.pinCode(account.pinCode)
+          val newAccount = BankAccountDetails
+            .create
+            .accountNumber(account.accountNumber)
+            .userId(account.userId.getOrElse(""))
+            .bankNationalIdentifier(account.bankNationalIdentifier)
+            .pinCode(account.pinCode)
+
           tryo(newAccount.save).isDefined
         }
       }
