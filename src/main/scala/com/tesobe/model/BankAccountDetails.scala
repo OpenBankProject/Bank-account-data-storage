@@ -41,7 +41,7 @@ class BankAccountDetails extends LongKeyedMapper[BankAccountDetails] with Create
     override def defaultValue = ""
   }
   object bankNationalIdentifier extends MappedString(this, 32)
-  object pinCode extends MappedString(this, 1024)
+  object pinCode extends MappedString(this, 2048)
 }
 
 object BankAccountDetails extends BankAccountDetails with LongKeyedMetaMapper[BankAccountDetails]{
