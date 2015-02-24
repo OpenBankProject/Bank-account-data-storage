@@ -50,11 +50,10 @@ object HBCITransactionFetcher extends Loggable{
           else
             valueTotest
 
-        val myBankBIC = replaceIfEmpty(bd.account.bank.bic, HBCIUtils.getBICForBLZ(account.bankNationalIdentifier))
         val myBankName = replaceIfEmpty(bd.account.bank.name, HBCIUtils.getNameForBLZ(account.bankNationalIdentifier))
 
         val myBank = OBPBank(
-          bic = myBankBIC,
+          IBAN = bd.account.bank.IBAN,
           national_identifier = account.bankNationalIdentifier,
           name = myBankName
         )
@@ -63,7 +62,6 @@ object HBCITransactionFetcher extends Loggable{
         val myAccount = OBPAccount(
           holder = bd.account.holder,
           number = account.accountNumber,
-          iban = bd.account.iban,
           kind = bd.account.kind,
           bank = myBank
         )
@@ -80,7 +78,7 @@ object HBCITransactionFetcher extends Loggable{
             }
 
             val otherBank = OBPBank(
-              bic = otherAcc.flatMap {account => Option(account.bic)}.getOrElse(""),
+              IBAN = otherAcc.flatMap {account => Option(account.iban)}.getOrElse(""),
               national_identifier = otherBankBLZ.getOrElse(""),
               name = otherBankName
             )
@@ -88,7 +86,6 @@ object HBCITransactionFetcher extends Loggable{
             val otherAccount = OBPAccount(
               holder = otherAcc.flatMap {account => Option(account.name)}.getOrElse("").trim,
               number = otherAcc.flatMap {account => Option(account.number)}.getOrElse(""),
-              iban = otherAcc.flatMap {account => Option(account.iban)}.getOrElse(""),
               kind = otherAcc.flatMap {account => Option(account.`type`)}.getOrElse(""),
               bank = otherBank
             )
@@ -100,8 +97,7 @@ object HBCITransactionFetcher extends Loggable{
               completed = OBPDate(l.bdate),
               new_balance = OBPAmount(l.saldo.value.getCurr, l.saldo.value.getDoubleValue.toString),
               value = OBPAmount(l.value.getCurr, l.value.getDoubleValue.toString),
-              label = l.usage.asScala.mkString ("/"),
-              other_data = Option(l.additional).getOrElse("")
+              label = l.usage.asScala.mkString ("/")
             )
 
             OBPTransaction(

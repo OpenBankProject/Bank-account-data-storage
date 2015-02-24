@@ -57,13 +57,13 @@ case class OBPTransaction(
 case class OBPAccount(
   holder: String,
   number: String,
-  iban: String,
   kind: String,
   bank: OBPBank
 )
 
+//IBAN is in here rather than the OBPAccount for legacy reasons
 case class OBPBank(
-  bic: String,
+  IBAN: String,
   national_identifier: String,
   name: String
 )
@@ -74,8 +74,7 @@ case class OBPDetails(
   completed: OBPDate,
   new_balance: OBPAmount,
   value: OBPAmount,
-  label: String,
-  other_data: String)
+  label: String)
 
 case class OBPDate(`$dt`: Date)
 

@@ -192,14 +192,13 @@ object HBCIConnector extends Loggable {
               s
 
           val myBank = OBPBank(
-            bic = fullStringOrEmpty(thisAccount.bic),
+            IBAN = fullStringOrEmpty(thisAccount.iban),
             national_identifier = fullStringOrEmpty(thisAccount.blz),
             name = fullStringOrEmpty(passport.getInstName)
           )
           val myAccount = OBPAccount(
             holder = fullStringOrEmpty(thisAccount.name) + fullStringOrEmpty(thisAccount.name2),
             number = fullStringOrEmpty(thisAccount.number),
-            iban = fullStringOrEmpty(thisAccount.iban),
             kind  = fullStringOrEmpty(thisAccount.`type`),
             bank = myBank
           )
