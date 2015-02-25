@@ -54,11 +54,7 @@ package com.tesobe.model{
     accountNumber: String,
     bankIdentifier: String,
     bankName: String
-  ) extends BankAccountNumber
-
-  trait BankAccountNumber {
-    val accountNumber : String
-  }
+  )
 
   case class UpdateBankAccount(
     accountNumber : String,
