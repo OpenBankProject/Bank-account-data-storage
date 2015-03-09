@@ -1,5 +1,24 @@
-#importer.apiurl==FILL_ME
-#importer.keyfile==FILL_ME
-#connection.host==FILL_ME
-#connection.user==FILL_ME
-#connection.password=FILL_ME
+#this is a sample props file you should edit and rename
+#see https://www.assembla.com/wiki/show/liftweb/Properties for all the naming options, or just use "default.props" in this same folder
+
+#Base url (the bit before the /api/transactions) of the OBP-API's "add transactions" call
+importer.apiurl=http://127.0.0.1:8080/obp_transactions_saver
+
+#secret key used to add transactions to the OBP-API (the OBP-API's importer_secret)
+importer.postSecret=009es9f0jesf09jes0fj
+
+#location of the private key used to decrypt pin codes
+importer.keyfile=/path/to/the/private-key.gpg
+
+#you can use a no config needed h2 database by setting db.driver=org.h2.Driver and not including db.url
+db.driver=org.postgresql.Driver
+#be sure to create your database and update the line below!
+db.url=jdbc:postgresql://localhost:5432/dbname?user=dbusername&password=thepassword
+
+#rabbitMQ settings (used to communicate with the OBP-API project)
+connection.host=localhost
+connection.user=theusername
+connection.password=thepassword
+
+#directory to store temporary HBCI .dat files
+pinFilesDirectory=/some/path/goes/here
