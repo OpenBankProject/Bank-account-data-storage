@@ -79,16 +79,26 @@ object HBCIConnector extends Loggable {
         HBCICallback.NEED_PORT -> "443",
         HBCICallback.NEED_USERID -> userID.getOrElse(accountNumber),
         HBCICallback.NEED_CONNECTION -> "",
-        HBCICallback.CLOSE_CONNECTION -> "",
-        HBCICallback.NEED_PT_SECMECH -> "999"
+        HBCICallback.CLOSE_CONNECTION -> ""
       )
 
     // HBCICallbackConsole requires interaction with the console. We override callback to read the data from the settings map.
     object callback extends HBCICallbackConsole{
       override def callback(passport: org.kapott.hbci.passport.HBCIPassport, reason: Int, msg: String, datatype: Int, retData: StringBuffer){
-        settings.get(reason) match{
-          case Some(value) => retData.replace(0,retData.length(),value)
-          case _ => super.callback(passport, reason, msg, datatype, retData)
+        //get first tan method of the ones that are supported
+        if (reason == HBCICallback.NEED_PT_SECMECH) {
+          val method = retData.toString.split('|').headOption match {
+            case Some(x) => x.split(':')(0)
+            case None =>
+              logger.warn("Callback error: Could not return first TAN method from supplied list")
+              "999"
+          }
+          retData.replace(0, retData.length(), method)
+        } else {
+          settings.get(reason) match {
+            case Some(value) => retData.replace(0, retData.length(), value)
+            case _ => super.callback(passport, reason, msg, datatype, retData)
+          }
         }
       }
     }
@@ -117,7 +127,7 @@ object HBCIConnector extends Loggable {
 
           HBCIUtils.setParam("client.passport.default","PinTan");
           HBCIUtils.setParam("client.passport.PinTan.filename", filepath);
-          HBCIUtils.setParam("client.passport.PinTan.checkcert","0");
+          HBCIUtils.setParam("client.passport.PinTan.checkcert","1");
           HBCIUtils.setParam("client.passport.PinTan.certfile",null);
           HBCIUtils.setParam("client.passport.PinTan.proxy",null);
           HBCIUtils.setParam("client.passport.PinTan.proxyuser",null);
@@ -141,6 +151,7 @@ object HBCIConnector extends Loggable {
 
           HBCIUtils.setParam("client.passport.hbciversion.default", passportHBCIVersion);
 
+          /*
           HBCIUtils.setParam("action.resetBPD","1");
           HBCIUtils.setParam("action.resetUPD","1");
 
@@ -150,15 +161,17 @@ object HBCIConnector extends Loggable {
           if (HBCIUtils.getParam("action.resetUPD").equals("1")) {
             passport.clearUPD();
           }
-
+          */
 
           val hbciHandle = new HBCIHandler(HBCIUtils.getParam("client.passport.hbciversion.default"),passport);
 
           // Set which job should be executed, so in our case: get all transactions of a certain account.
+          // TODO: get last transaction date from db and only get transactions starting from this date
           val job: HBCIJob =  hbciHandle.newJob("KUmsAll");
           job.setParam("my.number", accountNumber);
           job.setParam("my.blz", blz);
           job.addToQueue();
+          logger.info(s"creating new job KUmsAll");
 
           val ret: HBCIExecStatus = hbciHandle.execute();
           val transactions: Box[List[UmsLine]] = {
@@ -205,7 +218,7 @@ object HBCIConnector extends Loggable {
 
 
           if (hbciHandle!=null) {
-            logger.info("closing hbci handel")
+            logger.info("closing hbci handle")
             hbciHandle.close();
           }
 

@@ -110,8 +110,19 @@ object HBCITransactionFetcher extends Loggable{
       }
       case Failure(msg, exception, _) => {
         logger.warn(s"could not fetch hbci transactions for account ${account.accountNumber} at ${account.bankNationalIdentifier}")
+        import java.io.StringWriter
+        import java.io.PrintWriter
+
         exception.map{e =>
-          logger.warn(e.toString)
+          //logger.warn(e.toString)
+
+          //log full stack trace
+          val writer = new StringWriter()
+          val printWriter = new PrintWriter( writer )
+          e.printStackTrace( printWriter )
+          printWriter.flush()
+          val stackTrace = writer.toString()
+          logger.warn(stackTrace)
         }
         Nil
       }
