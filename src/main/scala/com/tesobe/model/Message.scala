@@ -48,7 +48,7 @@ package com.tesobe.model{
   case class SuccessResponse(id: String, message: String) extends Response
   case class ErrorResponse(id: String, message: String) extends Response
 
-  case class CreateBankAccount(
+  @SerialVersionUID(3988687883966746423L) case class CreateBankAccount(
     accountOwnerId: String,
     accountOwnerProvider: String,
     accountNumber: String,

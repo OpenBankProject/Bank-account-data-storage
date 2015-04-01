@@ -3,3 +3,5 @@
 *.props
 target
 *.class
+.idea
+*.iml
