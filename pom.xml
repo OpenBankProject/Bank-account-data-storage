@@ -146,8 +146,8 @@
 		</dependency>
 		<dependency>
 			<groupId>org.kapott.hbci4java</groupId>
-			<artifactId>hbci4java-java</artifactId>
-			<version>2.5.12</version>
+			<artifactId>hbci4java</artifactId>
+			<version>2.5.13-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 

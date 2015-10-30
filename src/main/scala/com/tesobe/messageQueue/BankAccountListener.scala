@@ -63,6 +63,9 @@ object BankAccountAMQPListener extends Loggable{
   def saveBankAccount (account: AddBankAccountCredentials)= {
     logger.info(s"received message: $account")
     //Send a message to the API only if the account was created
+    //TODO: check if this account was not previously saved by another user (don't continue/result in corresponding
+    // error in that case)
+    //TODO: check if account pin is actually correct / try to fetch transactions and only then create account in api
     val accountExistsOrCreated =
       BankAccountDetails.find(
         By(BankAccountDetails.accountNumber, account.accountNumber),

@@ -117,7 +117,7 @@ object HBCIConnector extends Loggable {
           val filepath = Props.get("pinFilesDirectory").getOrElse("") + "passport_pintan_"+randomString(5)+".dat"
 
           //the maximum level of logging
-          val loglevel = "5"
+          val loglevel = "3"  //was: 5
 
           //HBCI Kernel settings
           HBCIUtils.setParam("client.connection.localPort",null);
@@ -136,7 +136,7 @@ object HBCIConnector extends Loggable {
 
           // Get HBCI-version from passport or the BLZ-file, the default for PinTan is "plus".
           val passport= AbstractHBCIPassport.getInstance()
-          val passportHBCIVersion: String ={
+          val passportHBCIVersion: String = {
             val hbciversion = passport.getHBCIVersion
             if (hbciversion.isEmpty){
               val version = HBCIUtils.getPinTanVersionForBLZ(blz)
@@ -258,7 +258,7 @@ object HBCIConnector extends Loggable {
         settings += ((HBCICallback.NEED_HOST, hbciURL))
         bankingData
       }
-      else{
+      else {
         val errorMessage = s"no HBCI URL available for BLZ $blz. Cannot fetch transactions"
         logger.error(errorMessage)
         Failure(errorMessage)
