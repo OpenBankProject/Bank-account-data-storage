@@ -28,12 +28,12 @@ Berlin 13359, Germany
 
  */
 package com.tesobe.util
-
 import java.io._
-import scala.sys.process._
+
+import com.tesobe.lib._
+import net.liftweb.common._
 import net.liftweb.util.Helpers._
 import net.liftweb.util.Props
-import net.liftweb.common._
 
 /**
  * Provides functionality to decrypt a given encrypted password.

@@ -66,7 +66,7 @@ package com.tesobe.status.model{
 
   import java.util.Date
 
-  case class GetBanksStatues
+  case class GetBanksStatues()
   case class BankStatus(
     country: String,
     id: String,

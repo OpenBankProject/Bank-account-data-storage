@@ -1,4 +1,4 @@
-package com.tesobe.util;
+package com.tesobe.lib;
 
 // this code is from http://sloanseaman.com/wordpress/2012/05/13/revisited-pgp-encryptiondecryption-in-java/
 
@@ -451,7 +451,7 @@ public class PGPUtils {
      * http://www.lockboxlabs.org/content/downloads
      *
      * I didn't think it was worth having to import a 4meg lib for three methods
-     * @param key
+     * @param encKey
      * @return
      */
     @SuppressWarnings("unchecked")
@@ -482,7 +482,7 @@ public class PGPUtils {
      * http://www.lockboxlabs.org/content/downloads
      *
      * I didn't think it was worth having to import a 4meg lib for three methods
-     * @param key
+     * @param sig
      * @return
      */
     private static boolean isMatchingUsage(PGPSignature sig, int keyUsage) {
