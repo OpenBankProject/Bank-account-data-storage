@@ -95,8 +95,8 @@
 		</dependency>
 		<dependency>
 			<groupId>org.specs2</groupId>
-			<artifactId>specs2_${scala.version}</artifactId>
-			<version>3.7</version>
+			<artifactId>specs2-core_${scala.version}</artifactId>
+			<version>3.8.9</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
