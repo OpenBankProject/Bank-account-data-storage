@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script id="jquery" src="/js/jquery-1.11.1.min.js" type="text/javascript"></script>
+
+</head>
+<body>
+  <div class="lift:EnterAccountData">
+    <form action="." method="post" class="lift:form.ajax ">
+      <TABLE>
+        <tbody>
+          <tr>
+            <td colspan="2" >
+              <span>Please enter your banking credentials for saving in the database:</span>
+          </tr>
+          <tr>
+            <td>
+              <label for="bankName">Bank Name:</label>
+            </td>
+            <td>
+              <input type="text" id="bankName" class="field" tabindex=2 />
+              <div class="lift:Msg?id=bankError&errorClass=error">message</div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label for="bankId">Bank ID:</label>
+            </td>
+            <td>
+              <input type="text" id="bankId" class="field" tabindex=2 />
+              <div class="lift:Msg?id=bankError&errorClass=error">message</div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label for="userId">User Id</label>
+            </td>
+            <td>
+              <input id="userId" class="field"
+                type="text" tabindex=3 />
+              <div class="lift:Msg?id=userIdError&errorClass=error">message</div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label for="accountNumber">Account number</label>
+            </td>
+            <td>
+              <input id="accountNumber" class="field"
+                type="text" tabindex=4 />
+              <div class="lift:Msg?id=accountNumberError&errorClass=error">message</div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label for="accountPin">Account Pin</label>
+            </td>
+            <td>
+              <input tabindex=5 id="accountPin" class="field"
+                type="password"  />
+              <div class="lift:Msg?id=accountPinError&errorClass=error">message</div>
+            </td>
+          </tr>
+          <!--<tr>-->
+            <!--<td>-->
+              <!--<label for="accountOwnerId">Account Owner</label>-->
+            <!--</td>-->
+            <!--<td>-->
+              <!--<input type="text" id="accountOwnerId" class="field"-->
+                      <!--tabindex=6 />-->
+              <!--<div class="lift:Msg?id=userIdError&errorClass=error">message</div>-->
+            <!--</td>-->
+          <!--</tr>-->
+          <tr>
+            <td>
+              <div id="skipButton"></div>
+            </td>
+            <td>
+              <span id="processSubmit"></span>
+              <input id="saveBtn" class="submit button" type="submit"
+                value="Save" tabindex=6/>
+            </td>
+          </tr>
+        </tbody>
+      </TABLE>
+    </form>
+    <div class="lift:embed?what=/templates-hidden/_ajax-loader"></div>
+    <div id="result">
+    </div>
+  </div>
+</body>
+</html>
