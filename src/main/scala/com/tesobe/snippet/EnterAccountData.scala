@@ -76,7 +76,7 @@ class EnterAccountData{
       //Assume None for now
       // val accountOwnerId = u.idGivenByProvider
       val accountOwnerProvider = Props.get("api.provider","http://127.0.0.1:8080")
-      val accountOwnerId ="Robert.Uk.02"
+      val accountOwnerId ="sebastian@tesobe.com"
 
 
 
