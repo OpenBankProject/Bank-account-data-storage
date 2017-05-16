@@ -10,6 +10,11 @@ importer.postSecret=009es9f0jesf09jes0fj
 #location of the private key used to decrypt pin codes
 importer.keyfile=/path/to/the/private-key.gpg
 
+#location of the public key used to encrypt to bypass user-login
+publicKeyPath=/path/to/public-key.gpg
+
+#providerid to bypass user-login
+api.provider=http://127.0.0.1:8080
 #you can use a no config needed h2 database by setting db.driver=org.h2.Driver and not including db.url
 db.driver=org.postgresql.Driver
 #be sure to create your database and update the line below!
