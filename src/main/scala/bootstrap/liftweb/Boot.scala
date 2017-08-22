@@ -30,18 +30,19 @@ Berlin 13359, Germany
 package bootstrap.liftweb
 
 
-import java.io.{ File, FileInputStream}
-import net.liftweb._
-import common._
-import http._
-import json.JsonDSL._
-import mapper._
-import util._
-import Helpers._
+import java.io.{File, FileInputStream}
 
-import com.tesobe.model.{BankAccountDetails, BankLog}
 import com.tesobe.messageQueue.{BankAccountAMQPListener, BanksStatuesListener}
+import com.tesobe.model.{BankAccountDetails, BankLog}
 import com.tesobe.util.MyExceptionLogger
+import net.liftweb.common._
+import net.liftweb.http._
+import net.liftweb.mapper._
+import net.liftweb.util.Helpers._
+
+//TO-DO: DefaultConnectionIdentifier was ambiguously (util/mapper) imported.
+//One import needed to be masked. Chosen by fair dice roll!
+import net.liftweb.util.{DefaultConnectionIdentifier => _, _}
 
 /**
  * A class that's instantiated early and run.  It allows the application

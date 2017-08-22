@@ -3,7 +3,7 @@ Open Bank Project - API
 Copyright (C) 2011, 2013, TESOBE / Music Pictures Ltd
 
 This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published by
+it under the terms of the GNU Affero General Public Licenseg as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
@@ -28,24 +28,20 @@ Berlin 13359, Germany
   Everett Sochowski : everett AT tesobe DOT com
   Ayoub Benali: ayoub AT tesobe DOT com
 */
-import org.mortbay.jetty.Connector
-import org.mortbay.jetty.Server
-import org.mortbay.jetty.webapp.WebAppContext
-import org.mortbay.jetty.nio._
-import scala.sys._
+import net.liftweb.util.Props
+import org.eclipse.jetty.server.Server
+import org.eclipse.jetty.webapp.WebAppContext
 
 object RunWebApp extends App {
-  val server = new Server
-  val scc = new SelectChannelConnector
-  scc.setPort(8080)
-  server.setConnectors(Array(scc))
+  val server = new Server(Props.getInt("dev.port", 8083))
+
 
   val context = new WebAppContext()
   context.setServer(server)
   context.setContextPath("/")
   context.setWar("src/main/webapp")
 
-  server.addHandler(context)
+  server.setHandler(context)
 
   try {
     println(">>> STARTING EMBEDDED JETTY SERVER, PRESS ANY KEY TO STOP")
